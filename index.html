@@ -249,13 +249,13 @@ function items(){
   ];
   if(u9)L.push({id:'b1o',name:'la base orange',kind:'base',xy:[308,278],r:17,say:"La base orange, collée à la première base. La première base est doublée : le coureur peut courir sur la base orange, pendant que le défenseur reste sur la base blanche. Comme ça, on évite les collisions !"});
   if(!u9)L.push({id:'b2',name:'la deuxième base',kind:'base',xy:g.b2,say:"La deuxième base. Elle est tout au fond du terrain."});
-  L.push({id:'b3',name:'la troisième base',kind:'base',xy:g.b3,say:"La troisième base. Plus qu'un sprint pour rentrer à la maison !"});
+  L.push({id:'b3',name:u9?'la deuxième base':'la troisième base',kind:'base',xy:g.b3,say:(u9?"La deuxième base.":"La troisième base.")+" Plus qu'un sprint pour rentrer à la maison !"});
   L.push(
     u9?{id:'pitcher',name:'le coach qui lance',kind:'player',team:'c',xy:g.pitcher,say:"Le coach qui lance. C'est un adulte : il lance doucement la balle au frappeur. Le frappeur a 3 essais."}
       :{id:'pitcher',name:'le lanceur',kind:'player',team:'d',xy:g.pitcher,say:"Le lanceur. Il se tient sur le monticule et il lance la balle vers le frappeur."},
     {id:'batter',name:'le frappeur',kind:'player',team:'a',xy:[152,348],say:"Le frappeur. Il tient la batte et il essaie de taper la balle très fort !"},
     {id:'fb',name:'le joueur de première base',kind:'player',team:'d',xy:[264,232],say:"Le joueur de première base. Il rattrape la balle pour faire sortir le coureur."},
-    {id:'tb',name:'le joueur de troisième base',kind:'player',team:'d',xy:[136,232],say:"Le joueur de troisième base. Il garde la troisième base."},
+    {id:'tb',name:u9?'le joueur de deuxième base':'le joueur de troisième base',kind:'player',team:'d',xy:[136,232],say:u9?"Le joueur de deuxième base. Il garde la deuxième base.":"Le joueur de troisième base. Il garde la troisième base."},
     {id:'ss',name:"l'arrêt-court",kind:'player',team:'d',xy:[150,185],say:"L'arrêt-court. Il rattrape les balles qui roulent au milieu du terrain."}
   );
   if(!u9)L.push({id:'catcher',name:'le receveur',kind:'player',team:'d',xy:[200,384],say:"Le receveur. Il est accroupi derrière le marbre et il rattrape les balles que le frappeur ne touche pas."});
@@ -316,7 +316,7 @@ function renderField(){
     el.addEventListener('click',function(){onSpot(el.getAttribute('data-id'));});
     el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();onSpot(el.getAttribute('data-id'));}});
   });
-  $('#fieldcap').textContent=u9?'Terrain 9U (Bee-ball Rookie) : le marbre, la 1ère base (doublée, avec une base orange) et la 3ème base. Le coach lance.':'Grand terrain : le marbre et trois bases.';
+  $('#fieldcap').textContent=u9?'Terrain 9U (Bee-ball Rookie) : le marbre, la 1ère base (doublée, avec une base orange) et la 2ème base. Le coach lance.':'Grand terrain : le marbre et trois bases.';
 }
 function spotEl(id){return fw.querySelector('.spot[data-id="'+id+'"]');}
 function clearMarks(){Array.prototype.forEach.call(fw.querySelectorAll('.spot'),function(e){e.classList.remove('pulse','sel','good');});}
@@ -416,7 +416,8 @@ function endQuiz(){
 }
 
 /* ---------- 3. Cours aux bases ---------- */
-var BASENAME={b1:'la première base',b2:'la deuxième base',b3:'la troisième base',home:'le marbre'};
+var BASENAME={b1:'la première base',b2:'la deuxième base',home:'le marbre'};
+function bn(id){if(id==='b3')return state.mode==='u9'?'la deuxième base':'la troisième base';return BASENAME[id];}
 var helpOn=true;
 function startRun(){
   var seq=state.mode==='u9'?['b1','b3','home']:['b1','b2','b3','home'];
@@ -457,13 +458,13 @@ function runTap(id){
     }else{
       later(function(){
         act.lock=false;
-        setBubble('Super ! Maintenant, cours vers '+BASENAME[act.seq[act.idx]]+' !');
+        setBubble('Super ! Maintenant, cours vers '+bn(act.seq[act.idx])+' !');
         refreshHelp();
       },950);
     }
   }else{
     bad();
-    setBubble('Pas celle-là ! Cours vers '+BASENAME[next]+' !');
+    setBubble('Pas celle-là ! Cours vers '+bn(next)+' !');
     mark(next,'pulse');
   }
 }
@@ -515,7 +516,7 @@ function runnerReset(){
   void r.getBoundingClientRect();r.style.transition='';
 }
 function seqAll(){return state.mode==='u9'?['b1','b3','home']:['b1','b2','b3','home'];}
-var ORD={b1:'première',b2:'deuxième',b3:'troisième'};
+function ORD_(id){if(id==='b3')return state.mode==='u9'?'deuxième':'troisième';return {b1:'première',b2:'deuxième'}[id];}
 function finishRounds(again){
   clearMarks();overlay('');setCrumb('Terminé !');confetti();good();
   setBubble('Bravo ! '+act.clean+' bonnes réponses du premier coup sur '+act.queue.length+' !');
@@ -643,9 +644,9 @@ function throwPool(){
   var u9=state.mode==='u9';
   if(u9)return [
     {runners:[],forced:[],target:'b1',why:"Le frappeur est forcé de courir à la première base. On lance là-bas !",hint:"Personne n'est sur base : le frappeur doit courir à la première base."},
-    {runners:['b1'],forced:['b1'],target:'b3',why:"Le frappeur pousse le coureur de la première base : il est forcé d'aller à la troisième base. On lance là-bas !",hint:"Le coureur de la première base doit courir à la base suivante."},
-    {runners:['b3'],forced:[],target:'b1',why:"Le coureur de la troisième base n'est pas forcé : personne ne le pousse. Mais le frappeur doit aller à la première base : on lance là-bas !",hint:"Personne ne pousse le coureur de la troisième base. Qui est forcé de courir ?"},
-    {runners:['b1','b3'],forced:['b1','b3'],target:'home',why:"Le frappeur pousse le coureur de la première, qui pousse celui de la troisième : il est forcé de rentrer au marbre. On lance au marbre !",hint:"Cherche le coureur forcé qui est le plus avancé."}
+    {runners:['b1'],forced:['b1'],target:'b3',why:"Le frappeur pousse le coureur de la première base : il est forcé d'aller à la deuxième base. On lance là-bas !",hint:"Le coureur de la première base doit courir à la base suivante."},
+    {runners:['b3'],forced:[],target:'b1',why:"Le coureur de la deuxième base n'est pas forcé : personne ne le pousse. Mais le frappeur doit aller à la première base : on lance là-bas !",hint:"Personne ne pousse le coureur de la deuxième base. Qui est forcé de courir ?"},
+    {runners:['b1','b3'],forced:['b1','b3'],target:'home',why:"Le frappeur pousse le coureur de la première, qui pousse celui de la deuxième : il est forcé de rentrer au marbre. On lance au marbre !",hint:"Cherche le coureur forcé qui est le plus avancé."}
   ];
   return [
     {runners:[],forced:[],target:'b1',why:"Le frappeur est forcé de courir à la première base. On lance là-bas !",hint:"Personne n'est sur base : le frappeur doit courir à la première base."},
@@ -660,9 +661,9 @@ function throwPool(){
 }
 function describeRunners(r){
   if(r.length===0)return "Personne n'est sur base.";
-  if(r.length===1)return 'Un coureur est sur la '+ORD[r[0]]+' base.';
+  if(r.length===1)return 'Un coureur est sur la '+ORD_(r[0])+' base.';
   if(r.length===3)return 'Les trois bases sont occupées !';
-  return 'Des coureurs sont sur la '+ORD[r[0]]+' et la '+ORD[r[1]]+' base.';
+  return 'Des coureurs sont sur la '+ORD_(r[0])+' et la '+ORD_(r[1])+' base.';
 }
 var FIELDER=[236,268];
 function startThrow(){
@@ -730,7 +731,7 @@ function scenarios(){
     {e:'⚾',t:'Tu es en défense et la balle roule vers toi !',c:[['🧤',"Je l'rattrape et je la lance vers une base"],['🙈','Je me cache'],['🚶',"Je m'en vais"]],ok:0,why:'On rattrape la balle et on la lance vite à un copain sur une base pour faire sortir le coureur.'}
   ];
   if(u9){
-    var base9={e:'⚾',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['3️⃣','La troisième base'],['🏠','Directement au marbre'],['🪑','Au banc']],ok:0,why:'Après la première base, on court à la troisième base, puis on rentre au marbre !'};
+    var base9={e:'⚾',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['2️⃣','La deuxième base'],['🏠','Directement au marbre'],['🪑','Au banc']],ok:0,why:'Après la première base, on court à la deuxième base, puis on rentre au marbre !'};
     var only9=[
       {e:'⚾',t:'Au 9U, qui lance la balle au frappeur ?',c:[['🧑‍🏫','Le coach, un adulte'],['🧒','Un enfant de l’autre équipe'],['🤖','Une machine']],ok:0,why:'Le coach lance doucement la balle. Le frappeur a 3 essais.'},
       {e:'⚾',t:'Le coach a lancé 3 fois et tu n’as pas touché la balle.',c:[['🏌️','On pose la balle sur le tee, et je frappe'],['🚪','Je suis out'],['🪑','Je perds mon tour']],ok:0,why:'On passe au tee-ball : la balle est posée sur le tee, et tu as autant d’essais que nécessaire !'},
@@ -807,7 +808,7 @@ function endScen(){
 /* ---------- branchements ---------- */
 var RULES={
   u9:{src:'D’après le règlement FFBS du 9U Bee-ball Rookie (2021) et le livret BeeBall (2015).',list:[
-    'Le terrain : le marbre, la 1ère base et la 3ème base, à 15 m les unes des autres. La première base est doublée : une blanche et une orange collée.',
+    'Le terrain : le marbre, la 1ère base et la 2ème base, à 15 m l\u2019une de l\u2019autre. La première base est doublée : une blanche et une orange collée.',
     'Le coach lance la balle : le frappeur a 3 essais.',
     'Après 3 essais ratés, on frappe la balle posée sur le tee, autant de fois que nécessaire (2 bases au maximum).',
     'Un point : toucher les bases dans l’ordre et revenir au marbre en courant.',
