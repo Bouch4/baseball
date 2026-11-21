@@ -1063,12 +1063,12 @@ var POSE2=null;
 var poseLefty=false;
 function topEval(P){
   var A=P.a,B=P.b,r=[];
-  var inBox=function(f){return f[0]-15>=98&&f[0]+15<=192&&f[1]-9>=222&&f[1]+9<=352;};
+  var inBox=function(f){return f[0]-15>=55&&f[0]+15<=149&&f[1]-9>=222&&f[1]+9<=352;};
   r.push({ok:inBox(A)&&inBox(B),label:'Les deux pieds dans la boîte du frappeur',hint:'Place tes deux pieds dans la boîte du frappeur, à '+(poseLefty?'droite':'gauche')+' du marbre !'});
   var dy=Math.abs(A[1]-B[1]);
   r.push({ok:dy>=50&&dy<=90,label:'Pieds écartés comme les épaules',hint:dy<50?'Écarte tes pieds : ils sont trop près !':'Rapproche tes pieds : ils sont trop écartés !'});
   r.push({ok:Math.abs(A[0]-B[0])<=12,label:'Pieds alignés, à la même distance du marbre',hint:'Mets tes pieds l’un derrière l’autre, à la même distance du marbre !'});
-  var gap=214-(Math.max(A[0],B[0])+15);
+  var gap=169-(Math.max(A[0],B[0])+15);
   r.push({ok:gap>=22&&gap<=65,label:'Assez près du marbre pour l’atteindre avec la batte',hint:gap<22?'Recule un peu : tu es trop près du marbre !':'Rapproche-toi du marbre : tu es trop loin pour l’atteindre avec la batte !'});
   var my=(A[1]+B[1])/2;
   r.push({ok:my>=270&&my<=325,label:'Au niveau du milieu du marbre',hint:my<270?'Descends un peu : place-toi en face du milieu du marbre !':'Monte un peu : place-toi en face du milieu du marbre !'});
@@ -1076,9 +1076,8 @@ function topEval(P){
 }
 function topDraw(){
   var P=POSE2,g=$('#tz');if(!g)return;
-  var tr=poseLefty?'translate(500 0) scale(-1 1)':'';
-  g.setAttribute('transform',tr);$('#tstat').setAttribute('transform',tr);
-  $('#tboxLbl').setAttribute('x',poseLefty?355:145);
+  var tr=poseLefty?'translate(410 0) scale(-1 1)':'';
+  g.setAttribute('transform',tr);
   $('#topCap').textContent='Vu de dessus, un '+(poseLefty?'gaucher se place dans la boîte à droite':'droitier se place dans la boîte à gauche')+' du marbre. Déplace chaque pied (orange) avec le doigt ou la souris.';
   function shoe(f){return '<g class="hd" data-h="'+(f===P.a?'a':'b')+'"><circle cx="'+f[0]+'" cy="'+f[1]+'" r="30" fill="transparent"/><ellipse cx="'+f[0]+'" cy="'+f[1]+'" rx="17" ry="9.5" fill="#f08a1c" stroke="#1c2a56" stroke-width="4"/><circle cx="'+(f[0]+10)+'" cy="'+f[1]+'" r="5" fill="#1c2a56" fill-opacity=".35"/></g>';}
   g.innerHTML=shoe(P.a)+shoe(P.b)+'<path d="M222 296 L240 296 M234 289 L242 296 L234 303" fill="none" stroke="#1c2a56" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0"/>';
@@ -1092,7 +1091,7 @@ function startPose(){
   act={type:'pose'};
   POSE={fl:POSE_START.fl,fr:POSE_START.fr,hx:POSE_START.hx,hy:POSE_START.hy,bx:POSE_START.bx,by:POSE_START.by,done:false,drag:null};
   setCrumb('Le petit frappeur');
-  POSE2={a:[118,205],b:[150,318],done:false,drag:null};
+  POSE2={a:[73,205],b:[105,318],done:false,drag:null};
   $('#scen').innerHTML='<div class="pose-card"><p class="sc-text" style="margin:0 0 6px">Place le petit frappeur comme un champion !</p>'+
     '<div class="pose-grid">'+    '<div id="paneFace"><h3 class="pose-h">👀 Vu de face : mains et batte</h3><svg class="pose-svg" id="poseSvg" viewBox="0 0 400 420" role="img" aria-label="Petit frappeur à placer, vu de face">'+
     '<rect x="0" y="378" width="400" height="42" fill="#d99a5e"/><rect x="0" y="370" width="400" height="10" fill="#5cb85c"/>'+
@@ -1102,13 +1101,13 @@ function startPose(){
     '<p style="font-size:.9rem;margin:8px 0 0;text-align:center">Déplace avec le doigt ou la souris : 👣 les pieds (orange), ✋ les mains (rose) et le rond violet au bout de la batte.</p></div>'+
     '<div id="paneTop"><h3 class="pose-h">🦶 Vu de dessus : les pieds</h3><svg class="pose-svg" id="topSvg" viewBox="0 0 410 420" role="img" aria-label="Pieds du frappeur vus de dessus, à côté du marbre">'+
     '<rect x="0" y="0" width="410" height="420" fill="#d99a5e"/>'+
-    '<g id="tstat"><rect x="98" y="222" width="94" height="130" fill="none" stroke="#fff" stroke-width="4"/>'+
-    '<rect x="308" y="222" width="94" height="130" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="4" stroke-dasharray="8 8"/>'+
-    '<path d="M214 262 L286 262 L286 292 L250 326 L214 292 Z" fill="#fff" stroke="#1c2a56" stroke-width="5" stroke-linejoin="round"/></g>'+
-    '<text x="250" y="289" text-anchor="middle" font-size="14" font-weight="800" fill="#1c2a56">marbre</text>'+
+    '<g id="tstat"><rect x="55" y="222" width="94" height="130" fill="none" stroke="#fff" stroke-width="4"/>'+
+    '<rect x="261" y="222" width="94" height="130" fill="none" stroke="#fff" stroke-width="4"/>'+
+    '<path d="M169 262 L241 262 L241 292 L205 326 L169 292 Z" fill="#fff" stroke="#1c2a56" stroke-width="5" stroke-linejoin="round"/></g>'+
+    '<text x="205" y="289" text-anchor="middle" font-size="14" font-weight="800" fill="#1c2a56">marbre</text>'+
     '<text x="205" y="26" text-anchor="middle" font-size="16" font-weight="800" fill="#1c2a56">⬆ Le lanceur est en haut</text>'+
     '<text x="205" y="408" text-anchor="middle" font-size="14" font-weight="800" fill="#1c2a56">Le receveur est en bas</text>'+
-    '<text id="tboxLbl" x="145" y="214" text-anchor="middle" font-size="13" font-weight="800" fill="#1c2a56">boîte du frappeur</text>'+
+    '<text x="102" y="214" text-anchor="middle" font-size="13" font-weight="800" fill="#1c2a56">boîte du droitier</text><text x="308" y="214" text-anchor="middle" font-size="13" font-weight="800" fill="#1c2a56">boîte du gaucher</text>'+
     '<g id="tz"></g></svg>'+
     '<ul class="pose-list" id="topList"></ul><p class="pose-hint" id="topHint" aria-live="polite"></p>'+
     '<p id="topCap" style="font-size:.9rem;margin:8px 0 0;text-align:center"></p></div>'+
@@ -1162,7 +1161,7 @@ function startPose(){
   tsvg.addEventListener('pointermove',function(e){
     if(!POSE2||!POSE2.drag)return;
     var q=tpt(e);
-    if(poseLefty)q[0]=500-q[0];
+    if(poseLefty)q[0]=410-q[0];
     POSE2[POSE2.drag]=[Math.max(20,Math.min(380,q[0])),Math.max(40,Math.min(385,q[1]))];
     POSE2.done=false;topDraw();
   });
