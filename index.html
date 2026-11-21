@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Petit Joueur de Baseball</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* Plan : un terrain géant au centre, tout se touche du doigt. Autocollants à contour marine, gazon vif, terre battue. Une seule page, thème clair assumé. */
+:root{
+  --sky:#d4ecfb; --sky-d:#b9e0f5; --grass:#59b862; --grass-d:#46a455; --clay:#dc9358;
+  --ink:#1c2a56; --red:#e5483a; --blue:#3f78e0; --star:#ffc93c; --paper:#fffdf6; --ok:#1f9d55;
+  --c1:#ffe08a; --c2:#ffb4a9; --c3:#b6e6a8; --c4:#a9d4ff;
+  --display:'Fredoka','Trebuchet MS',system-ui,sans-serif;
+  --body:'Nunito',system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:var(--sky);color:var(--ink);font-family:var(--body);font-weight:700;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid var(--red);outline-offset:3px}
+.app{max-width:640px;margin:0 auto;padding:12px 16px 40px;display:flex;flex-direction:column;gap:14px}
+
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.title{font-family:var(--display);font-weight:700;font-size:1.5rem;line-height:1.05;margin:0;flex:1;min-width:150px;text-wrap:balance}
+.chip{border:3px solid var(--ink);background:var(--paper);border-radius:999px;padding:6px 14px;font-family:var(--display);font-weight:600;font-size:1.15rem;box-shadow:0 3px 0 var(--ink);min-height:44px;display:inline-flex;align-items:center;gap:6px}
+button.chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.pop{animation:pop .5s ease}
+@keyframes pop{40%{transform:scale(1.25) rotate(-4deg)}}
+
+.seg{display:flex;gap:4px;padding:4px;border:3px solid var(--ink);border-radius:999px;background:var(--paper)}
+.seg button{flex:1;border:0;background:transparent;border-radius:999px;padding:10px 8px;min-height:46px;font-family:var(--display);font-weight:600;font-size:1.05rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+.crumb{font-family:var(--display);font-weight:600;font-size:1.25rem;text-align:center;margin:0}
+.fieldwrap{position:relative;width:100%;max-width:480px;margin:0 auto;border:4px solid var(--ink);border-radius:26px;overflow:hidden;background:var(--sky-d);box-shadow:0 6px 0 var(--ink)}
+.fieldwrap svg{display:block;width:100%;height:auto}
+.fieldcap{margin:0;text-align:center;font-size:1rem;opacity:.85}
+
+.spot{cursor:pointer}
+.spot .ring{display:none;fill:none;stroke:var(--red);stroke-width:5;transform-box:fill-box;transform-origin:center}
+.spot.pulse .ring{display:block;animation:pulse 1s ease-in-out infinite}
+.spot.sel .ring{display:block;stroke:var(--ink)}
+.spot.good .ring{display:block;stroke:var(--ok)}
+@keyframes pulse{50%{transform:scale(1.3);opacity:.5}}
+.passive .spot{pointer-events:none}
+#runner{transition:transform .85s cubic-bezier(.5,0,.3,1);pointer-events:none}
+
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti span{position:absolute;bottom:-30px;animation:rise 2s ease-out forwards}
+@keyframes rise{to{transform:translateY(-480px) rotate(40deg);opacity:0}}
+
+.rules{background:var(--paper);border:3px solid var(--ink);border-radius:18px;padding:10px 14px;box-shadow:0 4px 0 var(--ink)}
+.rules summary{font-family:var(--display);font-weight:600;font-size:1.1rem;cursor:pointer;min-height:36px;display:flex;align-items:center}
+.rules ul{margin:6px 0 4px;padding-left:20px;display:flex;flex-direction:column;gap:6px;line-height:1.35}
+.rules .src{margin:6px 0 0;font-size:.85rem;opacity:.75}
+.boom{animation:boom .7s ease-out forwards;transform-box:fill-box;transform-origin:center}
+@keyframes boom{0%{transform:scale(.3);opacity:0}30%{transform:scale(1.4);opacity:1}100%{transform:scale(1);opacity:0}}
+.rd{transition:transform 1.5s ease-in-out}
+.c5{background:#e3c8ff}.c6{background:#ffd1a1}
+#ball{transition:transform 1.1s cubic-bezier(.2,.7,.3,1);pointer-events:none}
+.ballIn.fly{animation:arc 1.1s ease-in-out}
+@keyframes arc{50%{transform:translateY(-46px) scale(1.4)}}
+.btn.hint{animation:pulseBtn 1s ease-in-out infinite}
+.btn:disabled{opacity:.5;cursor:default}
+@keyframes pulseBtn{50%{transform:scale(1.08)}}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{border:4px solid var(--ink);border-radius:22px;padding:14px 12px;text-align:center;box-shadow:0 6px 0 var(--ink);display:flex;flex-direction:column;gap:4px;align-items:center;min-height:150px;justify-content:center}
+.card:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.card .em{font-size:2.8rem;line-height:1}
+.card .nm{font-family:var(--display);font-weight:700;font-size:1.25rem;line-height:1.1}
+.card .sub{font-size:.95rem;opacity:.85}
+.c1{background:var(--c1)}.c2{background:var(--c2)}.c3{background:var(--c3)}.c4{background:var(--c4)}
+
+.bubble{display:flex;gap:12px;align-items:center;background:var(--paper);border:4px solid var(--ink);border-radius:22px;padding:14px 16px;box-shadow:0 5px 0 var(--ink)}
+.bubble p{margin:0;flex:1;font-size:1.3rem;line-height:1.35;font-weight:800}
+.round{flex:none;width:52px;height:52px;border-radius:50%;border:3px solid var(--ink);background:var(--star);font-size:1.5rem;box-shadow:0 3px 0 var(--ink)}
+.round:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.btn{border:3px solid var(--ink);background:var(--star);border-radius:16px;padding:12px 20px;font-family:var(--display);font-weight:600;font-size:1.2rem;box-shadow:0 4px 0 var(--ink);min-height:54px}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.alt{background:var(--paper)}
+
+.sc-card{background:var(--paper);border:4px solid var(--ink);border-radius:24px;padding:18px 16px;box-shadow:0 6px 0 var(--ink);display:flex;flex-direction:column;gap:14px}
+.sc-emoji{font-size:3.6rem;text-align:center;line-height:1}
+.sc-text{margin:0;font-size:1.3rem;line-height:1.35;text-align:center}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{display:flex;align-items:center;gap:12px;text-align:left;border:3px solid var(--ink);background:#fff;border-radius:18px;padding:12px 14px;min-height:64px;font-size:1.15rem;box-shadow:0 4px 0 var(--ink)}
+.choice .ce{font-size:2rem;flex:none}
+.choice:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.choice.right{background:#c5efd2;border-color:var(--ok);box-shadow:0 4px 0 var(--ok)}
+.choice.wrong{background:#fde0dc;border-color:var(--red);box-shadow:none;animation:shake .35s}
+.choice:disabled{opacity:.7;cursor:default}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.fb{min-height:1.6em;margin:0;font-size:1.15rem;text-align:center;line-height:1.35}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <button id="homeBtn" class="chip" aria-label="Retour au menu" hidden>🏠 Menu</button>
+    <h1 class="title">Petit Joueur de Baseball</h1>
+    <div id="starChip" class="chip" aria-label="Étoiles gagnées">⭐ <span id="stars">0</span></div>
+    <button id="soundBtn" class="chip" aria-label="Activer ou couper la voix" aria-pressed="true">🔊</button>
+  </header>
+
+  <div class="seg" id="seg" role="group" aria-label="Choisir le terrain">
+    <button data-mode="u9" aria-pressed="true">Terrain 9U</button>
+    <button data-mode="adult" aria-pressed="false">Grand terrain</button>
+  </div>
+
+  <p id="crumb" class="crumb" hidden></p>
+  <div id="fieldwrap" class="fieldwrap passive"></div>
+  <p id="fieldcap" class="fieldcap"></p>
+
+  <details id="rulesBox" class="rules">
+    <summary>📖 Les règles de ce terrain</summary>
+    <ul id="rulesList"></ul>
+    <p class="src" id="rulesSrc"></p>
+  </details>
+
+  <section id="menu" aria-label="Menu des jeux">
+    <div class="menu">
+      <button class="card c1" data-act="explore"><span class="em">🔍</span><span class="nm">Découvre le terrain</span><span class="sub">Touche et écoute</span></button>
+      <button class="card c2" data-act="quiz"><span class="em">🎯</span><span class="nm">Où est… ?</span><span class="sub">Trouve le bon endroit</span></button>
+      <button class="card c3" data-act="run"><span class="em">🏃</span><span class="nm">Cours aux bases</span><span class="sub">Marque un point</span></button>
+      <button class="card c5" data-act="hit"><span class="em">🏏</span><span class="nm">Jusqu'où je cours ?</span><span class="sub">Regarde la frappe</span></button>
+      <button class="card c6" data-act="throw"><span class="em">🧤</span><span class="nm">Où je lance ?</span><span class="sub">Défense et coureurs</span></button>
+      <button class="card c4" data-act="scen"><span class="em">🤔</span><span class="nm">Que fais-tu ?</span><span class="sub">Les règles du jeu</span></button>
+    </div>
+  </section>
+
+  <section id="play" hidden>
+    <div class="bubble"><p id="bubbleText"></p><button id="replay" class="round" aria-label="Réécouter">🔊</button></div>
+    <div id="actions" class="actions"></div>
+  </section>
+
+  <section id="scen" hidden></section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s);};
+var state={mode:'u9',stars:0,sound:true,voice:'',rate:0.95};
+var act=null, timers=[], lastSpoken='', ac=null;
+
+/* ---------- utilitaires ---------- */
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function later(fn,ms){var a=act;var id=setTimeout(function(){if(act===a)fn();},ms);timers.push(id);}
+function cancelTimers(){timers.forEach(clearTimeout);timers=[];}
+function save(){try{localStorage.setItem('petit-joueur',JSON.stringify({stars:state.stars,mode:state.mode,sound:state.sound}));}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem('petit-joueur')||'{}');}catch(e){return {};}}
+var PRAISE=['Bravo !','Super !','Bien joué !','Génial !','Tu es fort !','Yes !'];
+
+function frVoices(){
+  var all=[];try{all=speechSynthesis.getVoices()||[];}catch(e){}
+  var fr=all.filter(function(v){return v.lang&&v.lang.toLowerCase().replace('_','-').indexOf('fr')===0;});
+  function score(v){
+    var n=(v.name||'').toLowerCase(),sc=0;
+    if(/natural|neural|premium|enhanced|online/.test(n))sc+=5;
+    if(/google/.test(n))sc+=3;
+    if(/amélie|amelie|audrey|aurélie|aurelie|thomas|marie|denise|henri|vivienne|remy|rémy/.test(n))sc+=2;
+    if(v.lang.toLowerCase().replace('_','-')==='fr-fr')sc+=1;
+    return sc;
+  }
+  return fr.sort(function(a,b){return score(b)-score(a);});
+}
+function pickVoice(){
+  var l=frVoices(),i;
+  if(state.voice)for(i=0;i<l.length;i++)if(l[i].voiceURI===state.voice)return l[i];
+  return l[0]||null;
+}
+function say(text,force){
+  lastSpoken=text;
+  if(!(state.sound||force)||!('speechSynthesis' in window))return;
+  try{
+    speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(text);
+    u.lang='fr-FR';u.rate=state.rate;u.pitch=1;
+    var v=pickVoice();if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function tone(seq){
+  if(!state.sound)return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    var t=ac.currentTime;
+    seq.forEach(function(f){
+      var o=ac.createOscillator(),g=ac.createGain();
+      o.type='triangle';o.frequency.value=f;
+      g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.15,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.18);
+      o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.2);t+=.14;
+    });
+  }catch(e){}
+}
+function good(){tone([660,880,1040]);}
+function bad(){tone([320,250]);}
+function addStars(n){
+  state.stars+=n;$('#stars').textContent=state.stars;
+  var c=$('#starChip');c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop');save();
+}
+function setBubble(t,speak){$('#bubbleText').textContent=t;if(speak!==false)say(t);else lastSpoken=t;}
+function setCrumb(t){$('#crumb').textContent=t;}
+
+/* ---------- données du terrain ---------- */
+function geo(){
+  var u9=state.mode==='u9';
+  return {home:[200,350],b1:[290,260],b2:[200,170],b3:[110,260],pitcher:u9?[200,305]:[200,262]};
+}
+function items(){
+  var u9=state.mode==='u9',g=geo();
+  var L=[
+    {id:'home',name:'le marbre',kind:'base',xy:g.home,say:"Le marbre ! C'est la maison. On part d'ici, et on revient ici pour marquer un point."},
+    {id:'b1',name:'la première base',kind:'base',xy:g.b1,say:"La première base. C'est la première étape de ta course !"}
+  ];
+  if(!u9)L.push({id:'b2',name:'la deuxième base',kind:'base',xy:g.b2,say:"La deuxième base. Elle est tout au fond du terrain."});
+  L.push({id:'b3',name:'la troisième base',kind:'base',xy:g.b3,say:"La troisième base. Plus qu'un sprint pour rentrer à la maison !"});
+  L.push(
+    u9?{id:'pitcher',name:'le coach qui lance',kind:'player',team:'c',xy:g.pitcher,say:"Le coach qui lance. C'est un adulte : il lance doucement la balle au frappeur. Le frappeur a 3 essais."}
+      :{id:'pitcher',name:'le lanceur',kind:'player',team:'d',xy:g.pitcher,say:"Le lanceur. Il se tient sur le monticule et il lance la balle vers le frappeur."},
+    {id:'batter',name:'le frappeur',kind:'player',team:'a',xy:[152,348],say:"Le frappeur. Il tient la batte et il essaie de taper la balle très fort !"},
+    {id:'fb',name:'le joueur de première base',kind:'player',team:'d',xy:[264,232],say:"Le joueur de première base. Il attrape la balle pour faire sortir le coureur."},
+    {id:'tb',name:'le joueur de troisième base',kind:'player',team:'d',xy:[136,232],say:"Le joueur de troisième base. Il garde la troisième base."},
+    {id:'ss',name:"l'arrêt-court",kind:'player',team:'d',xy:[150,185],say:"L'arrêt-court. Il attrape les balles qui roulent au milieu du terrain."}
+  );
+  if(!u9)L.push({id:'catcher',name:'le receveur',kind:'player',team:'d',xy:[200,384],say:"Le receveur. Il est accroupi derrière le marbre et il attrape les balles que le frappeur ne touche pas."});
+  if(!u9)L.push({id:'sb',name:'le joueur de deuxième base',kind:'player',team:'d',xy:[250,185],say:"Le joueur de deuxième base. Il garde la deuxième base."});
+  L.push(
+    {id:'lf',name:'le joueur de champ extérieur gauche',kind:'player',team:'d',xy:[100,150],say:"Un joueur de champ extérieur. Il attrape les balles qui volent très loin."},
+    {id:'cf',name:'le joueur de champ extérieur central',kind:'player',team:'d',xy:[200,105],say:"Un joueur de champ extérieur. Il court partout dans l'herbe pour attraper la balle."},
+    {id:'rf',name:'le joueur de champ extérieur droit',kind:'player',team:'d',xy:[300,150],say:"Un joueur de champ extérieur. Il surveille le fond du terrain."}
+  );
+  return L;
+}
+function itemById(id){var l=items();for(var i=0;i<l.length;i++)if(l[i].id===id)return l[i];return null;}
+
+/* ---------- dessin du terrain ---------- */
+var fw=$('#fieldwrap');
+function renderField(){
+  var u9=state.mode==='u9',g=geo(),s='';
+  s+='<svg viewBox="0 0 400 420" role="img" aria-label="Terrain de baseball" xmlns="http://www.w3.org/2000/svg" font-family="Fredoka, sans-serif">';
+  s+='<path d="M200 350 L380 170 Q200 -40 20 170 Z" fill="#59b862"/>';
+  s+='<path d="M200 330 L340 190 Q200 10 60 190 Z" fill="#6cc874" opacity=".6"/>';
+  s+='<path d="M380 170 Q200 -40 20 170" fill="none" stroke="#1c2a56" stroke-width="7" stroke-linecap="round"/>';
+  s+='<circle cx="200" cy="350" r="32" fill="#dc9358"/>';
+  if(u9){
+    s+='<path d="M200 350 L290 260 L110 260 Z" fill="#46a455" stroke="#dc9358" stroke-width="30" stroke-linejoin="round"/>';
+  }else{
+    s+='<path d="M200 368 L314 260 L200 148 L86 260 Z" fill="#dc9358" stroke="#dc9358" stroke-width="8" stroke-linejoin="round"/>';
+    s+='<path d="M200 326 L266 260 L200 194 L134 260 Z" fill="#59b862"/>';
+  }
+  s+='<circle cx="'+g.pitcher[0]+'" cy="'+g.pitcher[1]+'" r="22" fill="#dc9358"/>';
+  s+='<path d="M200 350 L380 170 M200 350 L20 170" stroke="#fff" stroke-width="4" stroke-linecap="round"/>';
+  var it=items(),i,o;
+  function wrap(o,shape){
+    return '<g class="spot" data-id="'+o.id+'" transform="translate('+o.xy[0]+' '+o.xy[1]+')" tabindex="0" role="button" aria-label="'+o.name+'"><circle class="ring" r="27"/><circle r="27" fill="transparent"/>'+shape+'</g>';
+  }
+  for(i=0;i<it.length;i++){
+    o=it[i];
+    if(o.kind==='base'){
+      var shape=o.id==='home'
+        ? '<path d="M-14 -12 H14 V4 L0 15 L-14 4 Z" fill="#fff" stroke="#1c2a56" stroke-width="3.5" stroke-linejoin="round"/>'
+        : '<rect x="-12" y="-12" width="24" height="24" transform="rotate(45)" fill="#fff" stroke="#1c2a56" stroke-width="3.5" stroke-linejoin="round"/>';
+      s+=wrap(o,shape);
+    }
+  }
+  for(i=0;i<it.length;i++){
+    o=it[i];
+    if(o.kind==='player'){
+      s+=wrap(o,'<circle r="17" fill="'+(o.team==='a'?'#e5483a':(o.team==='c'?'#f5a623':'#3f78e0'))+'" stroke="#1c2a56" stroke-width="3.5"/><text text-anchor="middle" dominant-baseline="central" font-size="17">🧢</text>');
+    }
+  }
+  s+='<g id="overlay" style="pointer-events:none"></g>';
+  var rp=(act&&act.runnerPos)||g.home;
+  var vis=(act&&(act.type==='run'||act.type==='hit'))?'visible':'hidden';
+  s+='<g id="runner" style="transform:translate('+rp[0]+'px,'+rp[1]+'px);visibility:'+vis+'"><circle r="18" fill="#e5483a" stroke="#1c2a56" stroke-width="3.5"/><text text-anchor="middle" dominant-baseline="central" font-size="20">🏃</text></g>';
+  s+='</svg>';
+  fw.innerHTML=s;
+  Array.prototype.forEach.call(fw.querySelectorAll('.spot'),function(el){
+    el.addEventListener('click',function(){onSpot(el.getAttribute('data-id'));});
+    el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();onSpot(el.getAttribute('data-id'));}});
+  });
+  $('#fieldcap').textContent=u9?'Terrain 9U (Bee-ball Rookie) : le marbre, la 1ère base et la 3ème base. Le coach lance.':'Grand terrain : le marbre et trois bases.';
+}
+function spotEl(id){return fw.querySelector('.spot[data-id="'+id+'"]');}
+function clearMarks(){Array.prototype.forEach.call(fw.querySelectorAll('.spot'),function(e){e.classList.remove('pulse','sel','good');});}
+function mark(id,c){var e=spotEl(id);if(e)e.classList.add(c);}
+function confetti(){
+  var c=document.createElement('div');c.className='confetti';
+  var em=['⭐','⚾','🎉','✨'];
+  for(var i=0;i<22;i++){
+    var sp=document.createElement('span');sp.textContent=em[i%4];
+    sp.style.left=(Math.random()*92)+'%';sp.style.animationDelay=(Math.random()*.6)+'s';sp.style.fontSize=(20+Math.random()*18)+'px';
+    c.appendChild(sp);
+  }
+  fw.appendChild(c);setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},3000);
+}
+
+/* ---------- navigation ---------- */
+function go(screen){
+  cancelTimers();
+  try{if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}
+  $('#menu').hidden=screen!=='menu';
+  $('#rulesBox').hidden=screen!=='menu';
+  $('#play').hidden=screen!=='play';
+  $('#scen').hidden=screen!=='scen';
+  fw.hidden=screen==='scen';
+  $('#fieldcap').hidden=screen==='scen';
+  fw.classList.toggle('passive',screen==='menu');
+  $('#homeBtn').hidden=screen==='menu';
+  $('#crumb').hidden=screen==='menu';
+  if(screen==='menu'){act=null;renderField();}
+  clearMarks();
+}
+function startAct(type){
+  if(type==='explore')startExplore();
+  else if(type==='quiz')startQuiz();
+  else if(type==='run')startRun();
+  else if(type==='scen')startScen();
+  else if(type==='hit')startHit();
+  else if(type==='throw')startThrow();
+}
+function onSpot(id){
+  if(!act)return;
+  if(act.type==='explore')exploreTap(id);
+  else if(act.type==='quiz')quizTap(id);
+  else if(act.type==='run')runTap(id);
+  else if(act.type==='hit')hitTap(id);
+  else if(act.type==='throw')throwTap(id);
+}
+
+/* ---------- 1. Découvre le terrain ---------- */
+function startExplore(){
+  go('play');act={type:'explore'};
+  setCrumb('Découvre le terrain');
+  $('#actions').innerHTML='';
+  setBubble("Touche un joueur ou une base pour découvrir comment ça s'appelle !");
+}
+function exploreTap(id){
+  clearMarks();mark(id,'sel');
+  var it=itemById(id);if(it)setBubble(it.say);
+}
+
+/* ---------- 2. Où est… ? ---------- */
+function startQuiz(){
+  go('play');
+  var pool=items().filter(function(i){return ['home','b1','b2','b3','pitcher','catcher','batter'].indexOf(i.id)>-1;});
+  act={type:'quiz',queue:shuffle(pool).slice(0,6),i:0,tries:0,clean:0,lock:false};
+  $('#actions').innerHTML='';
+  nextQ();
+}
+function nextQ(){
+  if(act.i>=act.queue.length){endQuiz();return;}
+  act.tries=0;act.lock=false;clearMarks();
+  setCrumb('Où est… ?  '+(act.i+1)+' / '+act.queue.length);
+  setBubble('Touche '+act.queue[act.i].name+' !');
+}
+function quizTap(id){
+  if(act.lock)return;
+  var t=act.queue[act.i];
+  if(id===t.id){
+    act.lock=true;mark(id,'good');good();
+    if(act.tries===0)act.clean++;
+    addStars(1);
+    setBubble(pick(PRAISE)+" C'est "+t.name+' !');
+    later(function(){act.i++;nextQ();},2300);
+  }else{
+    act.tries++;bad();
+    {var it=itemById(id);setBubble('Ça, c’est '+(it?it.name:'autre chose')+'. Cherche '+t.name+' !');}
+    if(act.tries>=2)mark(t.id,'pulse');
+  }
+}
+function endQuiz(){
+  clearMarks();setCrumb('Terminé !');confetti();good();
+  setBubble('Bravo ! Tu as trouvé '+act.clean+' endroits du premier coup sur '+act.queue.length+' !');
+  $('#actions').innerHTML='<button class="btn" id="again">Rejouer</button><button class="btn alt" id="toMenu">🏠 Menu</button>';
+  $('#again').onclick=startQuiz;$('#toMenu').onclick=function(){go('menu');};
+}
+
+/* ---------- 3. Cours aux bases ---------- */
+var BASENAME={b1:'la première base',b2:'la deuxième base',b3:'la troisième base',home:'le marbre'};
+var helpOn=true;
+function startRun(){
+  var seq=state.mode==='u9'?['b1','b3','home']:['b1','b2','b3','home'];
+  act={type:'run',seq:seq,idx:0,lock:false,runnerPos:geo().home};
+  go('play');
+  act.runnerPos=geo().home;
+  renderField();
+  setCrumb('Cours aux bases');
+  setBubble('Tu as frappé la balle ! Cours vers la première base !');
+  renderRunActions(false);refreshHelp();
+}
+function renderRunActions(done){
+  var h='';
+  if(done)h+='<button class="btn" id="again">Rejouer</button><button class="btn alt" id="toMenu">🏠 Menu</button>';
+  else h+='<button class="btn alt" id="helpBtn">💡 Aide : '+(helpOn?'oui':'non')+'</button>';
+  $('#actions').innerHTML=h;
+  if(done){$('#again').onclick=startRun;$('#toMenu').onclick=function(){go('menu');};}
+  else $('#helpBtn').onclick=function(){helpOn=!helpOn;renderRunActions(false);refreshHelp();};
+}
+function refreshHelp(){
+  clearMarks();
+  if(helpOn&&act&&act.type==='run'&&act.idx<act.seq.length)mark(act.seq[act.idx],'pulse');
+}
+function runTap(id){
+  if(act.lock)return;
+  var next=act.seq[act.idx];
+  if(id===next){
+    act.lock=true;good();
+    var p=geo()[id];act.runnerPos=p;
+    var r=$('#runner');if(r)r.style.transform='translate('+p[0]+'px,'+p[1]+'px)';
+    act.idx++;clearMarks();
+    if(act.idx>=act.seq.length){
+      later(function(){
+        addStars(2);confetti();good();
+        setBubble('Tu as marqué un point ! Bravo !');setCrumb('Point marqué !');
+        renderRunActions(true);
+      },950);
+    }else{
+      later(function(){
+        act.lock=false;
+        setBubble('Super ! Maintenant, cours vers '+BASENAME[act.seq[act.idx]]+' !');
+        refreshHelp();
+      },950);
+    }
+  }else{
+    bad();
+    setBubble('Pas celle-là ! Cours vers '+BASENAME[next]+' !');
+    mark(next,'pulse');
+  }
+}
+
+
+/* ---------- helpers frappe / lancer ---------- */
+function overlay(h){var o=fw.querySelector('#overlay');if(o)o.innerHTML=h;}
+function runnerDot(id){var p=geo()[id];return '<g transform="translate('+p[0]+' '+p[1]+')"><circle r="16" fill="#e5483a" stroke="#1c2a56" stroke-width="3.5"/><text text-anchor="middle" dominant-baseline="central" font-size="17">🏃</text></g>';}
+function ballHTML(x,y){return '<g id="ball" style="transform:translate('+x+'px,'+y+'px)"><g class="ballIn"><circle r="10" fill="#fff" stroke="#1c2a56" stroke-width="3"/><path d="M-6 -5 Q0 0 -6 5 M6 -5 Q0 0 6 5" fill="none" stroke="#e5483a" stroke-width="2"/></g></g>';}
+function moveBall(x,y,fly,dur){
+  var b=fw.querySelector('#ball');if(!b)return;
+  var inn=b.firstChild;inn.setAttribute('class','ballIn');void b.getBoundingClientRect();
+  if(fly)inn.setAttribute('class','ballIn fly');
+  b.style.transition='transform '+(dur||1.1)+'s cubic-bezier(.2,.7,.3,1)';
+  b.style.transform='translate('+x+'px,'+y+'px)';
+}
+function nearestDefender(x,y){
+  var best=null,bd=1e9;
+  items().forEach(function(it){
+    if(it.kind!=='player'||it.team!=='d'||it.id==='pitcher')return;
+    var d=Math.pow(it.xy[0]-x,2)+Math.pow(it.xy[1]-y,2);
+    if(d<bd){bd=d;best=it;}
+  });
+  return best;
+}
+function moveDefender(it,x,y,dur){
+  var el=spotEl(it.id);if(!el)return;
+  el.style.transition='none';
+  el.style.transform='translate('+it.xy[0]+'px,'+it.xy[1]+'px)';
+  void el.getBoundingClientRect();
+  el.style.transition='transform '+dur+'s ease-in-out';
+  el.style.transform='translate('+x+'px,'+y+'px)';
+}
+function setFx(html){var f=fw.querySelector('#fx');if(f)f.innerHTML=html;}
+function setTrail(html){var f=fw.querySelector('#trail');if(f)f.innerHTML=html;}
+function runnerTo(id){
+  var p=geo()[id],r=$('#runner');if(r){r.style.transition='';r.style.transform='translate('+p[0]+'px,'+p[1]+'px)';}
+}
+function runnerToXY(x,y,dur){
+  var r=$('#runner');if(r){r.style.transition='transform '+dur+'s ease-in-out';r.style.transform='translate('+x+'px,'+y+'px)';}
+}
+function lerp(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];}
+function nextBase(id){var f=seqAll();return id==='home'||id==='batter'?f[0]:f[f.indexOf(id)+1];}
+function rdot(key,p){return '<g class="rd" data-k="'+key+'" style="transform:translate('+p[0]+'px,'+p[1]+'px)"><circle r="16" fill="#e5483a" stroke="#1c2a56" stroke-width="3.5"/><text text-anchor="middle" dominant-baseline="central" font-size="17">🏃</text></g>';}
+function moveRd(key,p){var e=fw.querySelector('.rd[data-k="'+key+'"]');if(e)e.style.transform='translate('+p[0]+'px,'+p[1]+'px)';}
+function runnerReset(){
+  var p=geo().home,r=$('#runner');if(!r)return;
+  r.style.transition='none';r.style.transform='translate('+p[0]+'px,'+p[1]+'px)';
+  void r.getBoundingClientRect();r.style.transition='';
+}
+function seqAll(){return state.mode==='u9'?['b1','b3','home']:['b1','b2','b3','home'];}
+var ORD={b1:'première',b2:'deuxième',b3:'troisième'};
+function finishRounds(again){
+  clearMarks();overlay('');setCrumb('Terminé !');confetti();good();
+  setBubble('Bravo ! '+act.clean+' bonnes réponses du premier coup sur '+act.queue.length+' !');
+  $('#actions').innerHTML='<button class="btn" id="again">Rejouer</button><button class="btn alt" id="toMenu">🏠 Menu</button>';
+  $('#again').onclick=again;$('#toMenu').onclick=function(){go('menu');};
+}
+function nextBtn(fn,last){
+  $('#actions').innerHTML='<button class="btn" id="nextBtn">'+(last?'Terminer ⭐':'Suivant ➜')+'</button>';
+  $('#nextBtn').onclick=fn;
+}
+
+/* ---------- 5. Jusqu'où je cours ? ---------- */
+function hitPool(){
+  var u9=state.mode==='u9',two=u9?'b3':'b2';
+  var P=[];
+  P.push(function(){return {kind:'roll',land:[240,292],ans:'b1',fin:'b1',
+    desc:"La balle roule dans le champ intérieur, tout près des bases !",
+    ok:"Bien vu ! La balle est tout près, les défenseurs vont la lancer très vite à la première base. On court à fond jusqu'à la première base !",
+    far:"Attention ! Les défenseurs sont tout près de la balle. Si tu dépasses la première base, tu seras touché entre deux bases : out !",
+    short:"Cours à fond vers la première base !"};});
+  P.push(function(){return {kind:'fly',land:pick([[110,130],[200,85],[295,135]]),ans:two,fin:'target',
+    desc:"La balle passe au-dessus des défenseurs et tombe loin, dans le champ extérieur !",
+    ok:"Super ! La balle est loin des défenseurs : tu as le temps de prendre 2 bases !",
+    far:"Doucement ! Les défenseurs vont récupérer la balle. Si tu vas trop loin, tu seras touché entre deux bases !",
+    short:"Tu peux aller plus loin ! La balle est loin des défenseurs : prends 2 bases."};});
+  P.push(function(){return {kind:'fly',land:[300,150],ans:'b1',fin:'out',
+    desc:"La balle monte très haut vers un défenseur… Va-t-il l'attraper ? Tu ne le sais pas encore !",
+    ok:"On court toujours à fond ! Cette fois, le défenseur l'a attrapée : tu es out. Mais s'il l'avait laissée tomber, tu aurais pu prendre 2 bases !",
+    far:"Pas encore ! Tu ne sais pas si le défenseur va l'attraper. Cours à fond à la première base, et regarde !",
+    short:"Cours à fond vers la première base !"};});
+  P.push(function(){return {kind:'fly',land:[300,150],ans:two,fin:'target',
+    desc:"La balle monte vers un défenseur… et elle tombe de son gant !",
+    ok:"Super, tu as continué à courir ! Comme la balle est tombée du gant, tu peux prendre 2 bases !",
+    far:"Doucement ! Le défenseur va vite récupérer la balle. 2 bases, c'est déjà très bien !",
+    short:"Tu peux aller plus loin ! La balle est tombée du gant : prends 2 bases."};});
+  P.push(function(){var l=Math.random()<.5;return {kind:'roll',land:l?[50,275]:[350,275],ans:'home',ret:true,
+    desc:"La balle sort des lignes : le coach crie « Foul ! » Où dois-tu aller ?",
+    ok:"Bien vu ! Foul : la balle est sortie des lignes. On revient au marbre et on recommence.",
+    stay:"Le coach a crié « Foul » : la balle est sortie des lignes. On revient au marbre et on recommence !"};});
+  if(u9){
+    P.push(function(){return {kind:'fly',land:[200,25],ans:'b3',chase:false,
+      desc:"Tu as frappé la balle posée sur le tee, très très loin !",
+      ok:"Au tee-ball, on peut gagner 2 bases au maximum, même si la balle part très loin !",
+      far:"Au tee-ball, c'est 2 bases au maximum !",
+      short:"Tu peux aller jusqu'à 2 bases !"};});
+    P.push(function(){return {kind:'roll',land:[175,322],ans:'home',ret:true,chase:false,
+      desc:"La balle n'a pas dépassé la ligne de pointe, à 5 mètres devant le frappeur. Foul ! Où dois-tu aller ?",
+      ok:"Bien vu ! La balle n'a pas dépassé la ligne de pointe : c'est un foul. On revient au marbre, le coach relance.",
+      stay:"La balle n'a pas dépassé la ligne de pointe : c'est un foul. On revient au marbre, le coach relance !"};});
+  }else{
+    P.push(function(){return {kind:'fly',land:[200,25],ans:'home',chase:false,
+      desc:"La balle passe par-dessus la clôture : c'est un home run !",
+      ok:"Home run ! Tu fais le tour complet des bases et tu marques un point !",
+      far:"",short:"Plus loin ! Une balle qui passe par-dessus la clôture, c'est un tour complet des bases !"};});
+  }
+  return P;
+}
+function startHit(){
+  var pool=hitPool();
+  var q=shuffle(pool).concat(shuffle(pool)).slice(0,6).map(function(f){return f();});
+  act={type:'hit',queue:q,i:0,tries:0,clean:0,lock:true,runnerPos:geo().home};
+  go('play');renderField();hitRound();
+}
+function hitRound(){
+  if(act.i>=act.queue.length){finishRounds(startHit);return;}
+  var h=act.queue[act.i];act.tries=0;act.lock=true;
+  renderField();clearMarks();
+  setCrumb('Jusqu\u2019où je cours ?  '+(act.i+1)+' / '+act.queue.length);
+  var g=geo(),hm=g.home,pm=g.pitcher;
+  overlay('<g id="trail"></g><g id="fx"></g>'+ballHTML(pm[0],pm[1]-14));
+  $('#actions').innerHTML='';
+  setBubble('Regarde la frappe !');
+  later(function(){moveBall(hm[0],hm[1]-10,false,.9);},500);
+  later(function(){
+    setFx('<text class="boom" x="'+(hm[0]-26)+'" y="'+(hm[1]-26)+'" text-anchor="middle" font-size="34">💥</text>');
+    var l=h.land,fly=h.kind==='fly';
+    var d=fly?'M'+hm[0]+' '+(hm[1]-10)+' Q'+((hm[0]+l[0])/2)+' '+(Math.min(hm[1],l[1])-70)+' '+l[0]+' '+l[1]:'M'+hm[0]+' '+(hm[1]-10)+' L'+l[0]+' '+l[1];
+    setTrail('<path d="'+d+'" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" opacity=".9"/>');
+    moveBall(l[0],l[1],fly,1.2);
+    runnerToXY(lerp(g.home,g.b1,.45)[0],lerp(g.home,g.b1,.45)[1],1.6);
+    if(h.chase!==false){var df=nearestDefender(l[0],l[1]);if(df)moveDefender(df,l[0]-(l[0]<df.xy[0]?-18:18),l[1]+(l[1]<df.xy[1]?10:-10),1.4);}
+  },1500);
+  later(function(){
+    setBubble(h.desc+(h.ret?'':' Jusqu\u2019où peux-tu courir ? Touche la base !'));
+    act.lock=false;
+  },3100);
+}
+function hitTap(id){
+  if(act.lock)return;
+  var h=act.queue[act.i],full=seqAll();
+  var target=h.ans;
+  if(id===target){
+    act.lock=true;good();
+    if(act.tries===0)act.clean++;
+    addStars(1);clearMarks();
+    var ti=full.indexOf(target);
+    var path=h.ret?[]:full.slice(0,ti+1);
+    if(h.ret)later(function(){runnerTo('home');},300);
+    path.forEach(function(b,k){later(function(){runnerTo(b);},300+k*950);});
+    var gg=geo();
+    if(h.fin==='b1')later(function(){moveBall(gg.b1[0],gg.b1[1],false,1);},500);
+    else if(h.fin==='target')later(function(){moveBall(gg[target][0],gg[target][1],true,1.3);},1400);
+    else if(h.fin==='out')later(function(){setFx('<text class="boom" x="'+gg.b1[0]+'" y="'+(gg.b1[1]-26)+'" text-anchor="middle" font-size="30">❌</text>');},1300);
+    later(function(){
+      if(target==='home'&&!h.ret)confetti();
+      setBubble(pick(PRAISE)+' '+h.ok);
+      var last=act.i>=act.queue.length-1;
+      nextBtn(function(){act.i++;hitRound();},last);
+    },400+path.length*950);
+  }else{
+    act.tries++;bad();
+    var ti2=full.indexOf(target),ci=full.indexOf(id);
+    var msg;
+    if(h.ret)msg=h.stay;
+    else if(ci<ti2)msg=h.short;
+    else msg=h.far;
+    setBubble(msg);
+    if(act.tries>=2)mark(target,'pulse');
+  }
+}
+
+/* ---------- 6. Où je lance ? ---------- */
+function throwPool(){
+  var u9=state.mode==='u9';
+  if(u9)return [
+    {runners:[],forced:[],target:'b1',why:"Le frappeur est forcé de courir à la première base. On lance là-bas !",hint:"Personne n'est sur base : le frappeur doit courir à la première base."},
+    {runners:['b1'],forced:['b1'],target:'b3',why:"Le frappeur pousse le coureur de la première base : il est forcé d'aller à la troisième base. On lance là-bas !",hint:"Le coureur de la première base doit courir à la base suivante."},
+    {runners:['b3'],forced:[],target:'b1',why:"Le coureur de la troisième base n'est pas forcé : personne ne le pousse. Mais le frappeur doit aller à la première base : on lance là-bas !",hint:"Personne ne pousse le coureur de la troisième base. Qui est forcé de courir ?"},
+    {runners:['b1','b3'],forced:['b1','b3'],target:'home',why:"Le frappeur pousse le coureur de la première, qui pousse celui de la troisième : il est forcé de rentrer au marbre. On lance au marbre !",hint:"Cherche le coureur forcé qui est le plus avancé."}
+  ];
+  return [
+    {runners:[],forced:[],target:'b1',why:"Le frappeur est forcé de courir à la première base. On lance là-bas !",hint:"Personne n'est sur base : le frappeur doit courir à la première base."},
+    {runners:['b1'],forced:['b1'],target:'b2',why:"Le frappeur pousse le coureur de la première base : il est forcé d'aller à la deuxième base. On lance là-bas !",hint:"Le coureur de la première base doit courir à la base suivante."},
+    {runners:['b1','b2'],forced:['b1','b2'],target:'b3',why:"Les coureurs sont poussés l'un par l'autre : celui de la deuxième base est forcé d'aller à la troisième base. On lance là-bas !",hint:"Cherche le coureur forcé qui est le plus avancé."},
+    {runners:['b1','b2','b3'],forced:['b1','b2','b3'],target:'home',why:"Les trois bases sont pleines : tout le monde est forcé d'avancer, et celui de la troisième base doit rentrer au marbre. On lance au marbre !",hint:"Cherche le coureur forcé qui est le plus avancé."},
+    {runners:['b2'],forced:[],target:'b1',why:"Le coureur de la deuxième base n'est pas forcé : personne ne le pousse. Mais le frappeur doit aller à la première base : on lance là-bas !",hint:"Personne ne pousse le coureur de la deuxième base. Qui est forcé de courir ?"},
+    {runners:['b3'],forced:[],target:'b1',why:"Le coureur de la troisième base n'est pas forcé : personne ne le pousse. Mais le frappeur doit aller à la première base : on lance là-bas !",hint:"Personne ne pousse le coureur de la troisième base. Qui est forcé de courir ?"},
+    {runners:['b1','b3'],forced:['b1'],target:'b2',why:"Le coureur de la première base est forcé d'aller à la deuxième base. Celui de la troisième n'est pas forcé. On lance à la deuxième base !",hint:"Quel coureur est poussé par le frappeur ?"},
+    {runners:['b2','b3'],forced:[],target:'b1',why:"La première base est vide : les coureurs des bases 2 et 3 ne sont pas forcés. Seul le frappeur est forcé : on lance à la première base !",hint:"Personne ne pousse les coureurs. Qui est forcé de courir ?"}
+  ];
+}
+function describeRunners(r){
+  if(r.length===0)return "Personne n'est sur base.";
+  if(r.length===1)return 'Un coureur est sur la '+ORD[r[0]]+' base.';
+  if(r.length===3)return 'Les trois bases sont occupées !';
+  return 'Des coureurs sont sur la '+ORD[r[0]]+' et la '+ORD[r[1]]+' base.';
+}
+var FIELDER=[236,268];
+function startThrow(){
+  var pool=throwPool();
+  act={type:'throw',queue:shuffle(pool).slice(0,6),i:0,tries:0,clean:0,lock:false,runnerPos:geo().home};
+  go('play');renderField();throwRound();
+}
+function throwRound(){
+  if(act.i>=act.queue.length){finishRounds(startThrow);return;}
+  var q=act.queue[act.i];act.tries=0;act.lock=true;
+  renderField();clearMarks();
+  setCrumb('Où je lance ?  '+(act.i+1)+' / '+act.queue.length);
+  var g=geo(),hm=g.home,pm=g.pitcher;
+  var h='<g id="trail"></g>'+q.runners.map(function(b){return rdot(b,g[b]);}).join('')+rdot('batter',g.home);
+  h+='<g transform="translate('+FIELDER[0]+' '+FIELDER[1]+')"><circle r="17" fill="#3f78e0" stroke="#1c2a56" stroke-width="3.5"/><text text-anchor="middle" dominant-baseline="central" font-size="17">🧤</text></g>';
+  h+='<g id="fx"></g>'+ballHTML(pm[0],pm[1]-14);
+  overlay(h);
+  var bs=spotEl('batter');if(bs)bs.style.visibility='hidden';
+  $('#actions').innerHTML='';
+  setBubble('Regarde la frappe !');
+  later(function(){moveBall(hm[0],hm[1]-10,false,.9);},500);
+  later(function(){
+    ['batter'].concat(q.forced).forEach(function(k){moveRd(k,lerp(k==='batter'?g.home:g[k],g[nextBase(k)],.45));});
+    setFx('<text class="boom" x="'+(hm[0]-26)+'" y="'+(hm[1]-26)+'" text-anchor="middle" font-size="34">💥</text>');
+    setTrail('<path d="M'+hm[0]+' '+(hm[1]-10)+' L'+(FIELDER[0]+12)+' '+(FIELDER[1]-8)+'" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" opacity=".9"/>');
+    moveBall(FIELDER[0]+12,FIELDER[1]-8,false,1.3);
+  },1500);
+  later(function(){
+    setBubble('Le défenseur a la balle ! '+describeRunners(q.runners)+' Le frappeur, en rouge, court vers la première base. Où doit-il lancer ?');
+    act.lock=false;
+  },3000);
+}
+function throwTap(id){
+  if(act.lock)return;
+  var q=act.queue[act.i];
+  if(id===q.target){
+    act.lock=true;good();
+    if(act.tries===0)act.clean++;
+    addStars(1);clearMarks();mark(id,'good');
+    var p=geo()[id],gg=geo();moveBall(p[0],p[1],true,.9);
+    ['batter'].concat(q.forced).forEach(function(k){moveRd(k,gg[nextBase(k)]);});
+    later(function(){setFx('<text class="boom" x="'+p[0]+'" y="'+(p[1]-28)+'" text-anchor="middle" font-size="30">❌</text>');},900);
+    later(function(){
+      setBubble(pick(PRAISE)+' '+q.why);
+      var last=act.i>=act.queue.length-1;
+      nextBtn(function(){act.i++;throwRound();},last);
+    },1200);
+  }else{
+    act.tries++;bad();
+    var msg;
+    if(q.runners.indexOf(id)>-1&&q.forced.indexOf(id)===-1)msg="Ce coureur n'est pas forcé de courir : personne ne le pousse !";
+    else if(q.runners.indexOf(id)>-1)msg="Presque ! Lance plutôt vers la base où le coureur le plus avancé est forcé d'aller.";
+    else msg="Personne n'est forcé d'aller là !";
+    setBubble(msg+(act.tries>=2?' '+q.hint:''));
+    if(act.tries>=2)mark(q.target,'pulse');
+  }
+}
+
+/* ---------- 4. Que fais-tu ? ---------- */
+function scenarios(){
+  var u9=state.mode==='u9';
+  var common=[
+    {e:'⚾💥',t:'Tu as tapé la balle et elle roule dans le terrain !',c:[['🏃','Je pose ma batte et je cours !'],['🧍','Je reste au marbre'],['🪑',"Je vais m'asseoir"]],ok:0,why:'On pose la batte et on court vers la première base le plus vite possible !'},
+    {e:'⚾☁️🧤',t:"Tu as tapé la balle en l'air et un joueur de l'autre équipe l'attrape avant qu'elle touche le sol.",c:[['🚪','Je suis out'],['🏃','Je cours à la première base'],['🏠','Je marque un point']],ok:0,why:"Une balle attrapée en l'air, c'est out, même si tu as très bien tapé !"},
+    {e:'🧤⚾',t:'Tu es en défense et la balle roule vers toi !',c:[['🧤',"Je l'attrape et je la lance vers une base"],['🙈','Je me cache'],['🚶',"Je m'en vais"]],ok:0,why:'On attrape la balle et on la lance vite à un copain sur une base pour faire sortir le coureur.'}
+  ];
+  if(u9){
+    var base9={e:'🏃➡️',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['3️⃣','La troisième base'],['🏠','Directement au marbre'],['🪑','Au banc']],ok:0,why:'Après la première base, on court à la troisième base, puis on rentre au marbre !'};
+    var only9=[
+      {e:'🧑‍🏫⚾',t:'Au 9U, qui lance la balle au frappeur ?',c:[['🧑‍🏫','Le coach, un adulte'],['🧒','Un enfant de l’autre équipe'],['🤖','Une machine']],ok:0,why:'Le coach lance doucement la balle. Le frappeur a 3 essais.'},
+      {e:'🏏💨💨💨',t:'Le coach a lancé 3 fois et tu n’as pas touché la balle.',c:[['🏌️','On pose la balle sur le tee, et je frappe'],['🚪','Je suis out'],['🪑','Je perds mon tour']],ok:0,why:'On passe au tee-ball : la balle est posée sur le tee, et tu as autant d’essais que nécessaire !'},
+      {e:'🏌️⚾',t:'Tu as frappé la balle posée sur le tee, très fort. Jusqu’où peux-tu aller ?',c:[['2️⃣','Deux bases au maximum'],['🏠','Directement au marbre'],['🛑','Nulle part']],ok:0,why:'Avec le tee-ball, on peut gagner 2 bases au maximum, même si la balle sort du terrain.'},
+      {e:'🏃✋⚾',t:'Tu cours entre deux bases et un défenseur te touche avec la balle dans la main ou dans le gant.',c:[['🚪','Je suis out'],['✅','Je suis sauf'],['🏠','Je marque un point']],ok:0,why:'Un coureur touché entre deux bases est out.'},
+      {e:'🧢🧢🧢🧢',t:'Dans une manche, qui passe à la batte ?',c:[['🧢','Tous les joueurs, une fois chacun'],['1️⃣','Seulement un joueur'],['💪','Seulement les plus forts']],ok:0,why:'Chaque joueur passe une fois à la batte à chaque manche.'},
+      {e:'🏠🎉',t:'Pour marquer un point, que dois-tu faire ?',c:[['🏃','Toucher les bases dans l’ordre et revenir au marbre en courant'],['🛑','Rester sur la première base'],['💥','Taper la balle très fort']],ok:0,why:'Un point, c’est un tour complet : les bases dans l’ordre, puis le marbre, en courant !'},
+      {e:'🧤📏',t:'Tu es en défense. Où dois-tu te placer avant que la balle soit frappée ?',c:[['📏','Derrière la ligne de sécurité'],['😬','Tout près du frappeur'],['🏠','Sur le marbre']],ok:0,why:'On reste derrière la ligne de sécurité. C’est plus sûr, et on peut avancer dès que la balle est frappée !'},
+      {e:'🏃➡️1️⃣🧤',t:'Tu cours vers la première base, mais un défenseur y arrive avec la balle avant toi.',c:[['🚪','Je suis out'],['✅','Je suis sauf'],['🔁','On recommence']],ok:0,why:'Si le défenseur touche la base avec la balle avant toi, tu es out.'},
+      {e:'⏱️4️⃣',t:'Combien de temps dure un match de 9U ?',c:[['⏱️','4 manches ou 45 minutes'],['🌙','Toute la nuit'],['1️⃣','Une seule manche']],ok:0,why:'Un match dure 4 manches ou 45 minutes.'}
+    ];
+    return [base9].concat(shuffle(common.concat(only9)).slice(0,5));
+  }
+  var baseC={e:'🏃➡️',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['2️⃣','La deuxième base'],['3️⃣','La troisième base'],['🏠','Directement au marbre']],ok:0,why:'On passe par la deuxième base, puis la troisième, puis on rentre au marbre.'};
+  var onlyC=[
+    {e:'🧢⚾',t:'Au baseball, qui lance la balle au frappeur ?',c:[['🧢','Le lanceur de l’équipe qui défend'],['🧑‍🏫','Le coach'],['🏏','Le frappeur lui-même']],ok:0,why:'Le lanceur de l’équipe en défense lance depuis le monticule.'},
+    {e:'🏏💨',t:'Le lanceur a lancé 3 fois dans la zone et tu as raté la balle. Ce sont 3 prises, ou 3 strikes.',c:[['🚪','Je suis out : je laisse ma place'],['🏃','Je cours à la première base'],['🏠','Je marque un point']],ok:0,why:'Trois prises et tu es out. Tu laisses ta place au joueur suivant.'},
+    {e:'⚾⚾⚾⚾',t:'Le lanceur a lancé 4 balles hors de la zone, trop loin pour les frapper.',c:[['🚶','Je marche tranquillement à la première base'],['🚪','Je suis out'],['🔁','Je dois recommencer']],ok:0,why:'Quatre balles : tu avances gratuitement à la première base !'},
+    {e:'🏃💨✅',t:'Tu arrives sur la base avant que la balle arrive.',c:[['✅','Je suis sauf !'],['❌','Je suis out'],['🤷','On ne sait pas']],ok:0,why:'Sauf, ou safe ! Tu es arrivé avant la balle, tu restes sur la base.'},
+    {e:'🏠🎉',t:'Tu es sur la dernière base et tu cours vers la maison.',c:[['🏠','Je touche le marbre : un point !'],['🛑',"Je m'arrête en route"],['🪑','Je retourne au banc']],ok:0,why:'En touchant le marbre, tu marques un point pour ton équipe !'},
+    {e:'3️⃣🚪',t:'Ton équipe vient de faire 3 outs.',c:[['🔄','On change : on passe en défense'],['🏏','On continue à frapper'],['🏆','On a gagné tout de suite']],ok:0,why:'Après 3 outs, les équipes changent de place. Celle qui frappait va défendre.'}
+  ];
+  return [baseC].concat(shuffle(common.concat(onlyC)).slice(0,5));
+}
+function startScen(){
+  go('scen');
+  act={type:'scen',queue:shuffle(scenarios()),i:0,clean:0,tries:0,lock:false};
+  renderScen();
+}
+function renderScen(){
+  var q=act.queue[act.i];act.tries=0;act.lock=false;
+  setCrumb('Que fais-tu ?  '+(act.i+1)+' / '+act.queue.length);
+  var opts=shuffle(q.c.map(function(c,k){return {k:k,e:c[0],l:c[1]};}));
+  var h='<div class="sc-card"><div class="sc-emoji" aria-hidden="true">'+q.e+'</div>'+
+    '<p class="sc-text">'+q.t+'</p>'+
+    '<div class="actions" style="margin:0"><button class="btn alt" id="listen">🔊 Écouter</button></div>'+
+    '<div class="choices">'+opts.map(function(o){return '<button class="choice" data-k="'+o.k+'"><span class="ce">'+o.e+'</span><span>'+o.l+'</span></button>';}).join('')+'</div>'+
+    '<p class="fb" id="fb" aria-live="polite"></p><div class="actions" id="scNext" style="margin:0"></div></div>';
+  $('#scen').innerHTML=h;
+  $('#listen').onclick=function(){say(q.t,true);};
+  Array.prototype.forEach.call($('#scen').querySelectorAll('.choice'),function(b){
+    b.onclick=function(){scenPick(b,q);};
+  });
+  say(q.t);
+}
+function scenPick(btn,q){
+  if(act.lock)return;
+  var k=+btn.getAttribute('data-k');
+  if(k===q.ok){
+    act.lock=true;good();
+    if(act.tries===0)act.clean++;
+    addStars(1);btn.classList.add('right');
+    Array.prototype.forEach.call($('#scen').querySelectorAll('.choice'),function(b){b.disabled=true;});
+    var msg=pick(PRAISE)+' '+q.why;
+    $('#fb').textContent=msg;say(msg);
+    var last=act.i>=act.queue.length-1;
+    $('#scNext').innerHTML='<button class="btn" id="nextBtn">'+(last?'Terminer ⭐':'Suivant ➜')+'</button>';
+    $('#nextBtn').onclick=function(){if(last)endScen();else{act.i++;renderScen();}};
+  }else{
+    act.tries++;bad();btn.classList.add('wrong');btn.disabled=true;
+    var m='Pas tout à fait, essaie encore !';
+    $('#fb').textContent=m;say(m);
+  }
+}
+function endScen(){
+  setCrumb('Terminé !');confetti();good();
+  var m='Bravo ! Tu connais bien les règles : '+act.clean+' bonnes réponses du premier coup sur '+act.queue.length+' !';
+  $('#scen').innerHTML='<div class="sc-card"><div class="sc-emoji">🏆</div><p class="sc-text">'+m+'</p><div class="actions" style="margin:0"><button class="btn" id="again">Rejouer</button><button class="btn alt" id="toMenu">🏠 Menu</button></div></div>';
+  say(m);
+  $('#again').onclick=startScen;$('#toMenu').onclick=function(){go('menu');};
+}
+
+/* ---------- branchements ---------- */
+var RULES={
+  u9:{src:'D’après le règlement FFBS du 9U Bee-ball Rookie (2021) et le livret BeeBall (2015).',list:[
+    'Le terrain : le marbre, la 1ère base et la 3ème base, à 15 m les unes des autres.',
+    'Le coach lance la balle : le frappeur a 3 essais.',
+    'Après 3 essais ratés, on frappe la balle posée sur le tee, autant de fois que nécessaire (2 bases au maximum).',
+    'Un point : toucher les bases dans l’ordre et revenir au marbre en courant.',
+    'Out : balle attrapée en l’air, coureur touché entre deux bases, ou défenseur qui touche la base avec la balle avant le coureur.',
+    'Base forcée : la défense lance vers la base où le coureur est obligé d\u2019aller.',
+    'Chaque joueur passe une fois à la batte à chaque manche.',
+    'Les défenseurs restent derrière la ligne de sécurité. Un match dure 4 manches ou 45 minutes.']},
+  adult:{src:'Règles du baseball classique, en version simplifiée.',list:[
+    'Le terrain : le marbre et 3 bases (1ère, 2ème, 3ème).',
+    'Le lanceur de l’équipe en défense lance la balle au frappeur.',
+    '3 prises (strikes) : le frappeur est out. 4 balles : il avance à la première base.',
+    'Un point : faire le tour des bases (1ère, 2ème, 3ème) et toucher le marbre.',
+    'Out : balle attrapée en l’air, coureur touché, ou défenseur qui touche la base avec la balle avant le coureur.',
+    'Base forcée : la défense lance vers la base où le coureur est obligé d\u2019aller.',
+    '3 outs : les équipes changent de place. Un match dure en général 9 manches.']}
+};
+function updateRules(){
+  var r=RULES[state.mode];
+  $('#rulesList').innerHTML=r.list.map(function(t){return '<li>'+t+'</li>';}).join('');
+  $('#rulesSrc').textContent=r.src;
+}
+function updateSeg(){
+  Array.prototype.forEach.call(document.querySelectorAll('#seg button'),function(b){
+    b.setAttribute('aria-pressed',b.getAttribute('data-mode')===state.mode?'true':'false');
+  });
+}
+function updateSound(){var b=$('#soundBtn');b.textContent=state.sound?'🔊':'🔇';b.setAttribute('aria-pressed',state.sound?'true':'false');}
+
+function start(data){
+  var s=load();
+  state.stars=(data&&data.stars!=null?data.stars:s.stars)||0;
+  state.mode=(data&&data.mode)||s.mode||'u9';
+  state.sound=(s.sound===false)?false:true;
+  
+  $('#stars').textContent=state.stars;
+  updateSeg();updateRules();updateSound();renderField();
+
+  Array.prototype.forEach.call(document.querySelectorAll('#seg button'),function(b){
+    b.addEventListener('click',function(){
+      var m=b.getAttribute('data-mode');
+      if(m===state.mode)return;
+      state.mode=m;save();updateSeg();updateRules();
+      var t=act&&act.type;
+      renderField();
+      if(t)startAct(t);
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.card'),function(c){
+    c.addEventListener('click',function(){startAct(c.getAttribute('data-act'));});
+  });
+  $('#homeBtn').addEventListener('click',function(){go('menu');});
+  $('#soundBtn').addEventListener('click',function(){
+    state.sound=!state.sound;updateSound();save();
+    if(!state.sound){try{speechSynthesis.cancel();}catch(e){}}
+  });
+  $('#replay').addEventListener('click',function(){say(lastSpoken,true);});
+  try{if(window.claude&&window.claude.hot&&window.claude.hot.snapshot)window.claude.hot.snapshot(function(){return {stars:state.stars,mode:state.mode};});}catch(e){}
+  try{if('speechSynthesis' in window)speechSynthesis.getVoices();}catch(e){}
+}
+try{
+  var hot=window.claude&&window.claude.hot;
+  if(hot&&hot.ready)hot.ready(start);else start((hot&&hot.data)||{});
+}catch(e){start({});}
+})();
+</script>
+</body>
+</html>
