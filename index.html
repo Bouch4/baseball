@@ -725,33 +725,33 @@ function throwTap(id){
 function scenarios(){
   var u9=state.mode==='u9';
   var common=[
-    {e:'⚾💥',t:'Tu as tapé la balle et elle roule dans le terrain !',c:[['🏃','Je pose ma batte et je cours !'],['🧍','Je reste au marbre'],['🪑',"Je vais m'asseoir"]],ok:0,why:'On pose la batte et on court vers la première base le plus vite possible !'},
-    {e:'⚾☁️🧤',t:"Tu as tapé la balle en l'air et un joueur de l'autre équipe l'rattrape avant qu'elle touche le sol.",c:[['🚪','Je suis out'],['🏃','Je cours à la première base'],['🏠','Je marque un point']],ok:0,why:"Une balle rattrapée en l'air, c'est out, même si tu as très bien tapé !"},
-    {e:'🧤⚾',t:'Tu es en défense et la balle roule vers toi !',c:[['🧤',"Je l'rattrape et je la lance vers une base"],['🙈','Je me cache'],['🚶',"Je m'en vais"]],ok:0,why:'On rattrape la balle et on la lance vite à un copain sur une base pour faire sortir le coureur.'}
+    {e:'⚾',t:'Tu as tapé la balle et elle roule dans le terrain !',c:[['🏃','Je pose ma batte et je cours !'],['🧍','Je reste au marbre'],['🪑',"Je vais m'asseoir"]],ok:0,why:'On pose la batte et on court vers la première base le plus vite possible !'},
+    {e:'⚾',t:"Tu as tapé la balle en l'air et un joueur de l'autre équipe l'rattrape avant qu'elle touche le sol.",c:[['🚪','Je suis out'],['🏃','Je cours à la première base'],['🏠','Je marque un point']],ok:0,why:"Une balle rattrapée en l'air, c'est out, même si tu as très bien tapé !"},
+    {e:'⚾',t:'Tu es en défense et la balle roule vers toi !',c:[['🧤',"Je l'rattrape et je la lance vers une base"],['🙈','Je me cache'],['🚶',"Je m'en vais"]],ok:0,why:'On rattrape la balle et on la lance vite à un copain sur une base pour faire sortir le coureur.'}
   ];
   if(u9){
-    var base9={e:'🏃➡️',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['3️⃣','La troisième base'],['🏠','Directement au marbre'],['🪑','Au banc']],ok:0,why:'Après la première base, on court à la troisième base, puis on rentre au marbre !'};
+    var base9={e:'⚾',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['3️⃣','La troisième base'],['🏠','Directement au marbre'],['🪑','Au banc']],ok:0,why:'Après la première base, on court à la troisième base, puis on rentre au marbre !'};
     var only9=[
-      {e:'🧑‍🏫⚾',t:'Au 9U, qui lance la balle au frappeur ?',c:[['🧑‍🏫','Le coach, un adulte'],['🧒','Un enfant de l’autre équipe'],['🤖','Une machine']],ok:0,why:'Le coach lance doucement la balle. Le frappeur a 3 essais.'},
-      {e:'🏏💨💨💨',t:'Le coach a lancé 3 fois et tu n’as pas touché la balle.',c:[['🏌️','On pose la balle sur le tee, et je frappe'],['🚪','Je suis out'],['🪑','Je perds mon tour']],ok:0,why:'On passe au tee-ball : la balle est posée sur le tee, et tu as autant d’essais que nécessaire !'},
-      {e:'🏌️⚾',t:'Tu as frappé la balle posée sur le tee, très fort. Jusqu’où peux-tu aller ?',c:[['2️⃣','Deux bases au maximum'],['🏠','Directement au marbre'],['🛑','Nulle part']],ok:0,why:'Avec le tee-ball, on peut gagner 2 bases au maximum, même si la balle sort du terrain.'},
-      {e:'🏃✋⚾',t:'Tu cours entre deux bases et un défenseur te touche avec la balle dans la main ou dans le gant.',c:[['🚪','Je suis out'],['✅','Je suis sauf'],['🏠','Je marque un point']],ok:0,why:'Un coureur touché entre deux bases est out.'},
-      {e:'🧢🧢🧢🧢',t:'Dans une manche, qui passe à la batte ?',c:[['🧢','Tous les joueurs, une fois chacun'],['1️⃣','Seulement un joueur'],['💪','Seulement les plus forts']],ok:0,why:'Chaque joueur passe une fois à la batte à chaque manche.'},
-      {e:'🏠🎉',t:'Pour marquer un point, que dois-tu faire ?',c:[['🏃','Toucher les bases dans l’ordre et revenir au marbre en courant'],['🛑','Rester sur la première base'],['💥','Taper la balle très fort']],ok:0,why:'Un point, c’est un tour complet : les bases dans l’ordre, puis le marbre, en courant !'},
-      {e:'🧤📏',t:'Tu es en défense. Où dois-tu te placer avant que la balle soit frappée ?',c:[['📏','Derrière la ligne de sécurité'],['😬','Tout près du frappeur'],['🏠','Sur le marbre']],ok:0,why:'On reste derrière la ligne de sécurité. C’est plus sûr, et on peut avancer dès que la balle est frappée !'},
-      {e:'🏃➡️1️⃣🧤',t:'Tu cours vers la première base, mais un défenseur y arrive avec la balle avant toi.',c:[['🚪','Je suis out'],['✅','Je suis sauf'],['🔁','On recommence']],ok:0,why:'Si le défenseur touche la base avec la balle avant toi, tu es out.'},
-      {e:'⏱️4️⃣',t:'Combien de temps dure un match de 9U ?',c:[['⏱️','4 manches ou 45 minutes'],['🌙','Toute la nuit'],['1️⃣','Une seule manche']],ok:0,why:'Un match dure 4 manches ou 45 minutes.'}
+      {e:'⚾',t:'Au 9U, qui lance la balle au frappeur ?',c:[['🧑‍🏫','Le coach, un adulte'],['🧒','Un enfant de l’autre équipe'],['🤖','Une machine']],ok:0,why:'Le coach lance doucement la balle. Le frappeur a 3 essais.'},
+      {e:'⚾',t:'Le coach a lancé 3 fois et tu n’as pas touché la balle.',c:[['🏌️','On pose la balle sur le tee, et je frappe'],['🚪','Je suis out'],['🪑','Je perds mon tour']],ok:0,why:'On passe au tee-ball : la balle est posée sur le tee, et tu as autant d’essais que nécessaire !'},
+      {e:'⚾',t:'Tu as frappé la balle posée sur le tee, très fort. Jusqu’où peux-tu aller ?',c:[['2️⃣','Deux bases au maximum'],['🏠','Directement au marbre'],['🛑','Nulle part']],ok:0,why:'Avec le tee-ball, on peut gagner 2 bases au maximum, même si la balle sort du terrain.'},
+      {e:'⚾',t:'Tu cours entre deux bases et un défenseur te touche avec la balle dans la main ou dans le gant.',c:[['🚪','Je suis out'],['✅','Je suis sauf'],['🏠','Je marque un point']],ok:0,why:'Un coureur touché entre deux bases est out.'},
+      {e:'⚾',t:'Dans une manche, qui passe à la batte ?',c:[['🧢','Tous les joueurs, une fois chacun'],['1️⃣','Seulement un joueur'],['💪','Seulement les plus forts']],ok:0,why:'Chaque joueur passe une fois à la batte à chaque manche.'},
+      {e:'⚾',t:'Pour marquer un point, que dois-tu faire ?',c:[['🏃','Toucher les bases dans l’ordre et revenir au marbre en courant'],['🛑','Rester sur la première base'],['💥','Taper la balle très fort']],ok:0,why:'Un point, c’est un tour complet : les bases dans l’ordre, puis le marbre, en courant !'},
+      {e:'⚾',t:'Tu es en défense. Où dois-tu te placer avant que la balle soit frappée ?',c:[['📏','Derrière la ligne de sécurité'],['😬','Tout près du frappeur'],['🏠','Sur le marbre']],ok:0,why:'On reste derrière la ligne de sécurité. C’est plus sûr, et on peut avancer dès que la balle est frappée !'},
+      {e:'⚾',t:'Tu cours vers la première base, mais un défenseur y arrive avec la balle avant toi.',c:[['🚪','Je suis out'],['✅','Je suis sauf'],['🔁','On recommence']],ok:0,why:'Si le défenseur touche la base avec la balle avant toi, tu es out.'},
+      {e:'⚾',t:'Combien de temps dure un match de 9U ?',c:[['⏱️','4 manches ou 45 minutes'],['🌙','Toute la nuit'],['1️⃣','Une seule manche']],ok:0,why:'Un match dure 4 manches ou 45 minutes.'}
     ];
     return [base9].concat(shuffle(common.concat(only9)).slice(0,5));
   }
-  var baseC={e:'🏃➡️',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['2️⃣','La deuxième base'],['3️⃣','La troisième base'],['🏠','Directement au marbre']],ok:0,why:'On passe par la deuxième base, puis la troisième, puis on rentre au marbre.'};
+  var baseC={e:'⚾',t:'Tu es sur la première base. Où dois-tu courir ensuite ?',c:[['2️⃣','La deuxième base'],['3️⃣','La troisième base'],['🏠','Directement au marbre']],ok:0,why:'On passe par la deuxième base, puis la troisième, puis on rentre au marbre.'};
   var onlyC=[
-    {e:'🧢⚾',t:'Au baseball, qui lance la balle au frappeur ?',c:[['🧢','Le lanceur de l’équipe qui défend'],['🧑‍🏫','Le coach'],['🏏','Le frappeur lui-même']],ok:0,why:'Le lanceur de l’équipe en défense lance depuis le monticule.'},
-    {e:'🏏💨',t:'Le lanceur a lancé 3 fois dans la zone et tu as raté la balle. Ce sont 3 prises, ou 3 strikes.',c:[['🚪','Je suis out : je laisse ma place'],['🏃','Je cours à la première base'],['🏠','Je marque un point']],ok:0,why:'Trois prises et tu es out. Tu laisses ta place au joueur suivant.'},
-    {e:'⚾⚾⚾⚾',t:'Le lanceur a lancé 4 balles hors de la zone, trop loin pour les frapper.',c:[['🚶','Je marche tranquillement à la première base'],['🚪','Je suis out'],['🔁','Je dois recommencer']],ok:0,why:'Quatre balles : tu avances gratuitement à la première base !'},
-    {e:'🏃💨✅',t:'Tu arrives sur la base avant que la balle arrive.',c:[['✅','Je suis sauf !'],['❌','Je suis out'],['🤷','On ne sait pas']],ok:0,why:'Sauf, ou safe ! Tu es arrivé avant la balle, tu restes sur la base.'},
-    {e:'🏠🎉',t:'Tu es sur la dernière base et tu cours vers la maison.',c:[['🏠','Je touche le marbre : un point !'],['🛑',"Je m'arrête en route"],['🪑','Je retourne au banc']],ok:0,why:'En touchant le marbre, tu marques un point pour ton équipe !'},
-    {e:'3️⃣🚪',t:'Ton équipe vient de faire 3 outs.',c:[['🔄','On change : on passe en défense'],['🏏','On continue à frapper'],['🏆','On a gagné tout de suite']],ok:0,why:'Après 3 outs, les équipes changent de place. Celle qui frappait va défendre.'}
+    {e:'⚾',t:'Au baseball, qui lance la balle au frappeur ?',c:[['🧢','Le lanceur de l’équipe qui défend'],['🧑‍🏫','Le coach'],['🏏','Le frappeur lui-même']],ok:0,why:'Le lanceur de l’équipe en défense lance depuis le monticule.'},
+    {e:'⚾',t:'Le lanceur a lancé 3 fois dans la zone et tu as raté la balle. Ce sont 3 prises, ou 3 strikes.',c:[['🚪','Je suis out : je laisse ma place'],['🏃','Je cours à la première base'],['🏠','Je marque un point']],ok:0,why:'Trois prises et tu es out. Tu laisses ta place au joueur suivant.'},
+    {e:'⚾',t:'Le lanceur a lancé 4 balles hors de la zone, trop loin pour les frapper.',c:[['🚶','Je marche tranquillement à la première base'],['🚪','Je suis out'],['🔁','Je dois recommencer']],ok:0,why:'Quatre balles : tu avances gratuitement à la première base !'},
+    {e:'⚾',t:'Tu arrives sur la base avant que la balle arrive.',c:[['✅','Je suis sauf !'],['❌','Je suis out'],['🤷','On ne sait pas']],ok:0,why:'Sauf, ou safe ! Tu es arrivé avant la balle, tu restes sur la base.'},
+    {e:'⚾',t:'Tu es sur la dernière base et tu cours vers la maison.',c:[['🏠','Je touche le marbre : un point !'],['🛑',"Je m'arrête en route"],['🪑','Je retourne au banc']],ok:0,why:'En touchant le marbre, tu marques un point pour ton équipe !'},
+    {e:'⚾',t:'Ton équipe vient de faire 3 outs.',c:[['🔄','On change : on passe en défense'],['🏏','On continue à frapper'],['🏆','On a gagné tout de suite']],ok:0,why:'Après 3 outs, les équipes changent de place. Celle qui frappait va défendre.'}
   ];
   return [baseC].concat(shuffle(common.concat(onlyC)).slice(0,5));
 }
