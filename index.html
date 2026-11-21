@@ -85,7 +85,7 @@ button.chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
 .board li.me{background:#fff0b8}
 .board .rk{font-family:var(--display);font-weight:700;text-align:center}
 .board .st{font-family:var(--display);font-weight:600}
-.c5{background:#e3c8ff}.c6{background:#ffd1a1}
+.c5{background:#e3c8ff}.c6{background:#ffd1a1}.c7{background:#c9f0d3}.c8{background:#cfe3ff}
 #ball{transition:transform 1.1s cubic-bezier(.2,.7,.3,1);pointer-events:none}
 .ballIn.fly{animation:arc 1.1s ease-in-out}
 @keyframes arc{50%{transform:translateY(-46px) scale(1.4)}}
@@ -165,6 +165,7 @@ button.chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
       <button class="card c3" data-act="run"><span class="em">🏃</span><span class="nm">Cours aux bases</span><span class="sub">Marque un point</span></button>
       <button class="card c5" data-act="hit"><span class="em">🏏</span><span class="nm">Jusqu'où je cours ?</span><span class="sub">Regarde la frappe</span></button>
       <button class="card c6" data-act="throw"><span class="em">🧤</span><span class="nm">Où je lance ?</span><span class="sub">Défense et coureurs</span></button>
+      <button class="card c7" data-act="def"><span class="em">🧤</span><span class="nm">Défense en match</span><span class="sub">40 situations mélangées</span></button>
       <button class="card c4" data-act="scen"><span class="em">🤔</span><span class="nm">Que fais-tu ?</span><span class="sub">Les règles du jeu</span></button>
     </div>
   </section>
@@ -296,7 +297,7 @@ function items(){
     {id:'batter',name:'le frappeur',kind:'player',team:'a',xy:[152,348],say:"Le frappeur. Il tient la batte et il essaie de taper la balle très fort !"},
     {id:'fb',name:'le joueur de première base',kind:'player',team:'d',xy:[264,232],say:"Le joueur de première base. Il rattrape la balle pour faire sortir le coureur."},
     {id:'tb',name:u9?'le joueur de deuxième base':'le joueur de troisième base',kind:'player',team:'d',xy:[136,232],say:u9?"Le joueur de deuxième base. Il garde la deuxième base.":"Le joueur de troisième base. Il garde la troisième base."},
-    {id:'ss',name:"l'arrêt-court",kind:'player',team:'d',xy:[150,185],say:"L'arrêt-court. Il rattrape les balles qui roulent au milieu du terrain."}
+    {id:'ss',name:"l'arrêt-court",kind:'player',team:'d',xy:u9?[200,222]:[150,185],say:"L'arrêt-court. Il rattrape les balles qui roulent au milieu du terrain."}
   );
   if(!u9)L.push({id:'catcher',name:'le receveur',kind:'player',team:'d',xy:[200,384],say:"Le receveur. Il est accroupi derrière le marbre et il rattrape les balles que le frappeur ne touche pas."});
   if(!u9)L.push({id:'sb',name:'le joueur de deuxième base',kind:'player',team:'d',xy:[250,185],say:"Le joueur de deuxième base. Il garde la deuxième base."});
@@ -397,6 +398,7 @@ function startAct(type){
   else if(type==='scen')startScen();
   else if(type==='hit')startHit();
   else if(type==='throw')startThrow();
+  else if(type==='def')startDef('all');
 }
 function onSpot(id){
   if(!act)return;
@@ -797,6 +799,91 @@ function scenarios(){
   ];
   return [baseC].concat(shuffle(common.concat(onlyC)).slice(0,5));
 }
+
+/* ---------- Défense : champ intérieur / extérieur ---------- */
+function defPool(kind){return defPool1('inf').concat(defPool1('out'));}
+function defPool1(kind){
+  var u9=state.mode==='u9';
+  var P=u9?'au coach':'au lanceur';
+  function q(t,g,a,b,why,m){return {e:'⚾',t:t,c:[g,a,b],ok:0,why:why,m:m};}
+  var L=[];
+  if(kind==='inf'){
+    L=[
+      q("Tu es en défense. Personne n'est sur base et la balle roule vers toi. Où lances-tu ?",['1️⃣','À la première base'],['🏠','Au marbre'],['🙈','Nulle part, je la garde'],"Le frappeur est forcé de courir à la première base : on lance là-bas !"),
+      q("La balle monte très haut, juste au-dessus de toi.",['🧤','Je la rattrape en l’air'],['🏃','Je me sauve'],['🙈','Je ferme les yeux'],"Une balle rattrapée en l’air, c’est out, sans même lancer !"),
+      q("La balle va être frappée. Comment te mets-tu ?",['🧎','Les genoux pliés, le gant devant, prêt à bouger'],['🧍','Les bras ballants'],['🪑','Assis par terre'],"Genoux pliés et gant devant : on est prêt à partir dans tous les sens !"),
+      q("La balle roule lentement vers toi.",['🏃','J’avance vers la balle et je l’attrape'],['🧍','J’attends qu’elle arrive'],['🙈','Je recule'],"On va chercher la balle : si on attend, le coureur arrive avant !"),
+      q("Deux copains courent vers la même balle.",['📣','L’un crie « À moi ! » et l’autre laisse'],['🚶','Chacun se tait'],['💥','On se rentre dedans'],"On crie « À moi ! » pour que les copains sachent qui s’en occupe."),
+      q("Tu as la balle dans ton gant. Que fais-tu avant de lancer ?",['👀','Je regarde où sont les coureurs'],['🙈','Je lance les yeux fermés'],['🪑','Je m’assois'],"On regarde les coureurs pour savoir à qui lancer !"),
+      q("Le coureur forcé arrive à ta base, la balle arrive avant lui.",['🦶','Je garde un pied sur la base, le gant tendu'],['🏃','Je cours loin de la base'],['🙈','Je lâche la balle'],"Pied sur la base et balle dans le gant avant le coureur : il est out !"),
+      q("Un coureur qui n’est pas forcé court entre deux bases.",['🧤','Je le touche avec la balle dans le gant'],['🙈','Je le laisse passer'],['🏠','Je lance au marbre'],"Un coureur touché entre deux bases est out !"),
+      q("Tous les coureurs sont arrêtés, sauf sur leurs bases. Tu as la balle.",['↩️','Je la renvoie '+P],['💥','Je la lance le plus loin possible'],['🧍','Je la garde dans ma poche'],"Quand le jeu est arrêté, on renvoie la balle "+P+" pour recommencer."),
+      q("La balle sort des lignes : foul ball !",['🚶','Je la ramasse et je la ramène tranquillement'],['🏃','Je cours à la première base'],['💥','Je la lance sur un coureur'],"Foul ball : personne ne court, on ramène la balle et on recommence."),
+      q("Ton lancer est trop haut et la balle passe au-dessus de ton copain.",['🏃','Je cours chercher la balle'],['🧍','Je reste planté là'],['😭','Je pleure'],"On ne s’arrête jamais : on va chercher la balle et on continue !"),
+      q("Tu lances la balle à un copain. Où vises-tu ?",['🎯','Vers sa poitrine, là où il montre son gant'],['⬆️','Au-dessus de sa tête'],['⬇️','Dans ses pieds'],"On vise la poitrine : c’est le plus facile à rattraper."),
+      q("La balle fait un mauvais rebond et file vers toi.",['🛡️','Je mets mon corps devant pour la bloquer'],['🙈','Je me pousse'],['🏃','Je m’enfuis'],"On bloque la balle avec le corps : elle reste devant nous !"),
+      q("Le frappeur a tapé tout doucement, la balle roule juste devant le marbre.",['⚡','Je la ramasse vite et je lance à la première base'],['🪑','J’attends qu’elle s’arrête'],['🏠','Je la laisse'],"Balle lente : on la ramasse vite et on lance vite, sinon le frappeur est sauf !")
+    ];
+    if(u9)L=L.concat([
+      q("Un coureur est sur la première base et la balle roule vers toi. Où lances-tu ?",['2️⃣','À la deuxième base'],['1️⃣','À la première base'],['🏠','Au marbre'],"Le frappeur pousse le coureur : il est forcé d’aller à la deuxième base !"),
+      q("Des coureurs sont sur la première et la deuxième base. La balle roule vers toi. Où lances-tu ?",['🏠','Au marbre'],['1️⃣','À la première base'],['🙈','Nulle part'],"Les coureurs sont poussés l’un par l’autre : celui de la deuxième base est forcé de rentrer au marbre !"),
+      q("Un coureur est seul sur la deuxième base. La balle roule vers toi.",['1️⃣','Je lance à la première base'],['🏠','Je lance au marbre'],['2️⃣','Je lance à la deuxième base'],"Personne ne pousse le coureur de la deuxième base. Seul le frappeur est forcé : on lance à la première base."),
+      q("Au tee-ball, la balle posée sur le tee est frappée en roulant. Qui va la chercher ?",['🧤','Le défenseur le plus près'],['🏠','Le plus loin de la balle'],['🪑','Personne'],"Le défenseur le plus près va chercher la balle. Les autres restent prêts à recevoir."),
+      q("La balle n’a pas dépassé la ligne de pointe, à 5 mètres du frappeur.",['🚶','C’est foul ball : je la renvoie au coach'],['🏃','Je lance à la première base'],['🙈','Je cours partout'],"Une balle qui n’a pas dépassé la ligne de pointe est un foul ball."),
+      q("Où te places-tu avant que le coach lance ?",['📏','Derrière la ligne de sécurité'],['😬','Tout près du frappeur'],['🏠','Sur le marbre'],"On reste derrière la ligne de sécurité, et on avance quand la balle est frappée !")
+    ]);
+    else L=L.concat([
+      q("Un coureur est sur la première base et la balle roule vers toi. Où lances-tu ?",['2️⃣','À la deuxième base'],['1️⃣','À la première base'],['🏠','Au marbre'],"Le frappeur pousse le coureur : il est forcé d’aller à la deuxième base !"),
+      q("Les trois bases sont occupées et la balle roule vers toi. Où lances-tu ?",['🏠','Au marbre'],['1️⃣','À la première base'],['🙈','Nulle part'],"Tous les coureurs sont forcés : celui de la troisième base doit rentrer au marbre !"),
+      q("Un coureur est seul sur la deuxième base. La balle roule vers toi.",['1️⃣','Je lance à la première base'],['🏠','Je lance au marbre'],['3️⃣','Je lance à la troisième base'],"Personne ne pousse le coureur de la deuxième base. Seul le frappeur est forcé : on lance à la première base."),
+      q("Il y a déjà 2 outs, les bases sont pleines. Où lances-tu ?",['🎯','À la base forcée la plus facile à atteindre'],['🙈','Je ne lance pas'],['🏠','Toujours au marbre'],"Avec 3 outs, la manche est finie : on prend le out le plus facile sur une base forcée."),
+      q("Un coureur est sur la première base, il n’y a personne d’out. La balle roule vers l’arrêt-court.",['✌️','Je lance à la deuxième base, qui relance à la première'],['🙈','Je garde la balle'],['🏠','Je lance au marbre'],"Ça s’appelle un double jeu : deux outs sur la même balle !"),
+      q("Tu es le receveur. La balle roule juste devant le marbre, personne n’est sur base.",['1️⃣','Je la ramasse et je lance à la première base'],['🏠','Je la garde'],['🙈','Je la laisse'],"Le receveur ramasse la balle et lance à la première base pour sortir le frappeur.")
+    ]);
+  }else{
+    L=[
+      q("Une balle haute vole vers toi, dans le champ extérieur.",['🧤','Je cours sous la balle, je la regarde et je la rattrape'],['🙈','Je me tourne'],['🪑','Je m’assois'],"On court sous la balle, on la regarde jusqu’au gant : c’est out !"),
+      q("Une balle roule dans l’herbe vers toi.",['🏃','Je cours vers elle et je l’attrape à deux mains'],['🧍','J’attends'],['🙈','Je recule'],"On va chercher la balle vite : plus on attend, plus les coureurs avancent !"),
+      q("Tu es très loin de la base où il faut lancer.",['↩️','Je lance à un copain placé entre moi et la base'],['💥','Je lance de toutes mes forces'],['🙈','Je garde la balle'],"Ce copain s’appelle le relais : le lancer est plus court, plus précis et plus rapide !"),
+      q("La balle passe au-dessus de ta tête.",['🏃','Je me retourne et je cours vers le fond, puis je la ramasse'],['🧍','Je regarde la balle partir'],['🙈','Je rentre'],"On court vers la balle sans attendre : le temps est précieux !"),
+      q("Toi et ton copain courez vers la même balle.",['📣','Je crie « À moi ! » ou je me pousse'],['🤐','Je dis rien'],['💥','On se rentre dedans'],"Celui qui est le mieux placé crie « À moi ! » et l’autre s’écarte."),
+      q("Le champ central crie « À moi ! » sur la balle.",['↔️','Je m’écarte, et je me place derrière lui'],['🏃','Je cours dessus aussi'],['🪑','Je m’assois'],"On laisse la balle à celui qui a crié, et on se place derrière pour l’aider."),
+      q("Tu as la balle. Que fais-tu d’abord ?",['👀','Je regarde où sont les coureurs'],['💥','Je lance tout de suite n’importe où'],['🪑','Je m’assois'],"On regarde les coureurs pour savoir à quelle base lancer."),
+      q("Tu lances à ton copain relais. Où vises-tu ?",['🎯','Vers sa poitrine'],['⬆️','Au-dessus de sa tête'],['⬇️','Par terre'],"On vise la poitrine : c’est le plus facile à rattraper."),
+      q("La balle sort des lignes : foul ball !",['🚶','Je la ramasse, personne ne court'],['🏃','Je lance à une base'],['💥','Je la jette au loin'],"Foul ball : le jeu est arrêté, on ramène la balle."),
+      q("Le soleil t’éblouit pendant que la balle descend.",['🧤','Je mets mon gant devant le soleil'],['🙈','Je ferme les yeux'],['🏃','Je rentre'],"Le gant fait de l’ombre : on peut voir la balle et la rattraper !"),
+      q("Tous les coureurs sont arrêtés sur leur base et tu as la balle.",['↩️','Je la renvoie '+P],['💥','Je la lance sur les coureurs'],['🙈','Je la garde'],"Le jeu est fini : on renvoie la balle "+P+" pour continuer."),
+      q("La balle rebondit devant toi. Si elle passe, les coureurs avancent encore.",['🧎','Je mets un genou au sol derrière mon gant'],['🙈','Je la laisse passer'],['🏃','Je me pousse'],"Genou au sol derrière le gant : la balle ne passe pas, les coureurs n’avancent pas !")
+    ];
+    if(u9)L=L.concat([
+      q("Un coureur est sur la première base. La balle roule dans l’herbe devant toi. Où lances-tu ?",['2️⃣','À la deuxième base (avec un relais)'],['1️⃣','À la première base'],['🙈','Nulle part'],"On lance à la base devant le coureur pour l’empêcher d’avancer encore."),
+      q("Un coureur est sur la deuxième base et la balle est dans le champ extérieur. Il court vers le marbre.",['🏠','Je lance au marbre (avec un relais)'],['1️⃣','Je lance à la première base'],['🙈','Je garde la balle'],"On lance au marbre pour l’empêcher de marquer un point !"),
+      q("Le frappeur est déjà sur la deuxième base et tu as la balle.",['↩️','Je la renvoie au coach'],['🏠','Je la lance au marbre'],['🙈','Je cours'],"Au tee-ball, 2 bases au maximum : le frappeur ne peut pas aller plus loin. Le jeu est fini."),
+      q("Le coureur de la première base court vers la deuxième base. Qui reçoit ta balle ?",['🧤','Le joueur de deuxième base'],['🏠','Le coach'],['🙈','Personne'],"C’est lui qui garde la deuxième base : il reçoit la balle pour toucher le coureur."),
+      q("Une balle haute est rattrapée en l’air.",['🚪','Le frappeur est out, je renvoie la balle'],['🏃','Je lance à la première base'],['🙈','Je la lâche'],"Une balle rattrapée en l’air, c’est out. Le jeu s’arrête."),
+      q("Où te places-tu au champ extérieur avant la frappe ?",['🌿','Loin, sur l’herbe, derrière les bases'],['😬','Tout près du frappeur'],['🏠','Sur le marbre'],"Les défenseurs restent derrière la ligne de sécurité : au champ extérieur, on est bien loin."),
+      q("Ton lancer ne va pas arriver à la base tout seul.",['↩️','Je lance au relais'],['💥','Je lance plus fort'],['🙈','Je lance les yeux fermés'],"Le relais raccourcit le lancer : la balle arrive plus vite et plus juste."),
+      q("Le frappeur est sur la première base, la balle roule loin. Il veut aller à la deuxième.",['2️⃣','Je lance à la deuxième base pour le bloquer'],['🏠','Je lance au marbre'],['🙈','Je cours'],"On lance à la base d’après pour l’empêcher d’avancer.")
+    ]);
+    else L=L.concat([
+      q("Un coureur est sur la première base et la balle roule dans le champ extérieur. Où lances-tu ?",['3️⃣','À la troisième base, une base en avance'],['1️⃣','À la première base'],['🙈','Nulle part'],"On lance à la base d’après pour l’empêcher d’avancer encore."),
+      q("Un coureur est sur la deuxième base et la balle roule dans le champ extérieur. Il court vers le marbre.",['🏠','Je lance au marbre (avec un relais)'],['1️⃣','Je lance à la première base'],['🙈','Je la garde'],"On lance au marbre pour l’empêcher de marquer un point !"),
+      q("Un coureur est sur la troisième base. Tu rattrapes une balle haute.",['🏠','Je lance vite au marbre'],['1️⃣','Je lance à la première base'],['🙈','Je la garde'],"Le coureur peut repartir dès que tu as attrapé la balle : on lance vite au marbre !"),
+      q("Personne n’est sur base. Le frappeur a tapé fort, la balle roule dans l’herbe.",['2️⃣','Je lance à la deuxième base pour l’empêcher d’y aller'],['🏠','Je lance au marbre'],['🙈','Je rentre'],"On lance en avance, à la base d’après, pour bloquer le jeu."),
+      q("Le frappeur est déjà arrivé sur la deuxième base. Tu as la balle.",['3️⃣','Je regarde s’il peut aller à la troisième base, et je la bloque'],['🏠','Je lance au marbre'],['🙈','Je rentre'],"On bloque la base d’après pour qu’il ne prenne pas une base de plus."),
+      q("Un coureur est sur la première base et un autre sur la deuxième. Une balle roule dans l’herbe.",['3️⃣','Je lance à la base devant les coureurs'],['1️⃣','Je lance à la première base'],['🙈','Je rentre'],"On bloque la base devant eux : celui de la deuxième veut aller plus loin !"),
+      q("La balle passe par-dessus la clôture : home run !",['🚶','Je ne la cherche pas : les coureurs font le tour'],['🏃','Je la cherche partout'],['💥','Je lance au marbre'],"Un home run : on ne peut sortir personne. Les coureurs font le tour des bases."),
+      q("Un coureur est parti de la première base pendant que tu rattrapes une balle haute.",['↩️','Je lance à la première base'],['🏠','Je lance au marbre'],['🙈','Je la garde'],"Le coureur doit revenir à sa base : si la balle y arrive avant lui, il est out !")
+    ]);
+  }
+  return L;
+}
+function startDef(kind){
+  go('scen');
+  var pool=defPool(kind);
+  act={type:'scen',queue:shuffle(pool).slice(0,10),i:0,clean:0,tries:0,lock:false,again:function(){startDef(kind);}};
+  renderScen();
+}
 function startScen(){
   go('scen');
   act={type:'scen',queue:shuffle(scenarios()),i:0,clean:0,tries:0,lock:false};
@@ -843,7 +930,7 @@ function endScen(){
   var m='Bravo ! Tu connais bien les règles : '+act.clean+' bonnes réponses du premier coup sur '+act.queue.length+' !';
   $('#scen').innerHTML='<div class="sc-card"><div class="sc-emoji">🏆</div><p class="sc-text">'+m+'</p><div class="actions" style="margin:0"><button class="btn" id="again">Rejouer</button><button class="btn alt" id="toMenu">🏠 Menu</button></div></div>';
   say(m);
-  $('#again').onclick=startScen;$('#toMenu').onclick=function(){go('menu');};
+  $('#again').onclick=act&&act.again?act.again:startScen;$('#toMenu').onclick=function(){go('menu');};
 }
 
 /* ---------- branchements ---------- */
