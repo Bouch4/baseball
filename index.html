@@ -1222,9 +1222,11 @@ function scenPick(btn,q){
     var msg=pick(PRAISE)+' '+q.why;
     $('#fb').textContent=msg;say(msg);
     var last=act.i>=act.queue.length-1;
-    $('#scNext').innerHTML='<button class="btn" id="nextBtn">'+(last?'Terminer ⭐':'Suivant ➜')+'</button>';
-    try{$('#nextBtn').scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}
-    $('#nextBtn').onclick=function(){if(last)endScen();else{act.i++;renderScen();}};
+    var sa=$('#actions');if(sa)sa.innerHTML='';
+    $('#scNext').innerHTML='<button class="btn" id="scNextBtn">'+(last?'Terminer ⭐':'Suivant ➜')+'</button>';
+    var nb=$('#scNextBtn');
+    try{nb.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}
+    nb.onclick=function(){if(last)endScen();else{act.i++;renderScen();}};
   }else{
     act.tries++;bad();btn.classList.add('wrong');btn.disabled=true;
     var m='Pas tout à fait, essaie encore !';
